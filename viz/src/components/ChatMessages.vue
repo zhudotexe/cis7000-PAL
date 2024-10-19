@@ -52,6 +52,7 @@ defineExpose({ scrollChatToBottom });
 
 <style scoped>
 .messages {
+  padding: 4rem 4rem 2rem 4rem;
   overflow-y: auto;
 }
 
