@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import ChatMessages from "@/components/ChatMessages.vue";
-import type { InteractiveClient } from "@/redel/interactive";
+import type { InteractiveClient } from "@/pal/interactive-openai";
 import { RunState } from "@/redel/models";
 import type { ReDelState } from "@/redel/state";
 import autosize from "autosize";
 import WaveSurfer from "wavesurfer.js";
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record.esm.js';
 import { inject, nextTick, onMounted, onBeforeUnmount, ref, shallowRef } from "vue";
+
 
 const client = inject<InteractiveClient>("client")!;
 const state = inject<ReDelState>("state")!;
@@ -17,10 +18,15 @@ const chatMessages = ref<InstanceType<typeof ChatMessages> | null>(null);
 const waveSurfer = shallowRef<WaveSurfer | null>(null);
 const waveformRef = ref<HTMLDivElement | null>(null);
 const controllerContainer = ref<HTMLDivElement | null>(null);
-const scrollingWaveform = ref(false);
 const paused = ref(true);
+const global_pause_count = ref(0);
 const progress = ref("00:00");
 let record: any = null;
+
+const inputAudioBuffer = shallowRef<Int16Array[] | null>(null);
+const inputAudioContext = shallowRef<AudioContext | null>(null);
+const source = shallowRef<MediaStreamAudioSourceNode | null>(null);
+const processor = shallowRef<ScriptProcessorNode | null>(null);
 
 async function sendChatMsg() {
   const msg = chatMsg.value.trim();
@@ -36,6 +42,47 @@ async function sendChatMsg() {
   }, 0);
 }
 
+async function startRealtimeListening() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+          sampleRate: 24000,
+          channelCount: 1,
+          echoCancellation: true,
+      },
+    });
+    
+    inputAudioBuffer.value = [];
+    inputAudioContext.value = new AudioContext({sampleRate: 24000});
+    source.value = inputAudioContext.value.createMediaStreamSource(stream);
+    processor.value = inputAudioContext.value.createScriptProcessor(4096, 1, 1);
+
+    processor.value.onaudioprocess = (event) => {
+      const audioData = event.inputBuffer.getChannelData(0);
+
+      const int16Buffer = new Int16Array(convertFloat32ToInt16(audioData));
+      inputAudioBuffer.value?.push(int16Buffer);
+
+      client.appendAudio(int16Buffer);
+    };
+
+    source.value.connect(processor.value);
+    processor.value.connect(inputAudioContext.value.destination);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function toggleAudioCapture() {
+  if (paused.value && (source.value && processor.value && inputAudioContext.value)) {
+    source.value.connect(processor.value);
+    processor.value.connect(inputAudioContext.value.destination);
+  } else if (!paused.value) {
+    source.value?.disconnect();
+    processor.value?.disconnect();
+  }
+}
+
 const createWaveSurfer = () => {
   if (waveSurfer.value) {
     waveSurfer.value.destroy();
@@ -49,12 +96,13 @@ const createWaveSurfer = () => {
     barWidth: 2,
     barGap: 1,
     barRadius: 2,
-    cursorColor: 'transparent'
+    cursorColor: 'transparent',
+    backend: 'WebAudio'
   });
 
   record = waveSurfer.value.registerPlugin(RecordPlugin.create({
-    scrollingWaveform: scrollingWaveform.value,
-    renderRecordedAudio: false,
+    scrollingWaveform: true,
+    renderRecordedAudio: false
   }));
 
   record.on('record-progress', (time: number) => {
@@ -62,23 +110,23 @@ const createWaveSurfer = () => {
   });
 };
 
-const updateProgress = (time: number) => {
-  const minutes = Math.floor((time % 3600000) / 60000);
-  const seconds = Math.floor((time % 60000) / 1000);
-  progress.value = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-};
-
 async function toggleMicrophone() {
   if (record.isRecording() || record.isPaused()) {
+    toggleAudioCapture();
     paused.value = !record.isPaused();
+
     if (record.isPaused()) {
       record.resumeRecording();
+      global_pause_count.value += 1;
     } else {
       record.pauseRecording();
     }
   } else {
     paused.value = false;
     await record.startRecording({});
+    global_pause_count.value += 1;
+
+    startRealtimeListening();
   }
 }
 
@@ -86,8 +134,8 @@ onMounted(() => {
   autosize(chatInput.value!);
 
   createWaveSurfer();
-  RecordPlugin.getAvailableAudioDevices().then((devices) => {
-    devices.forEach((device) => {
+  RecordPlugin.getAvailableAudioDevices().then((devices: any[]) => {
+    devices.forEach((device: { deviceId: string; label: any; }) => {
       const option = document.createElement('option');
       option.value = device.deviceId;
       option.text = device.label || device.deviceId;
@@ -100,6 +148,21 @@ onBeforeUnmount(() => {
     waveSurfer.value.destroy();
   }
 });
+
+const updateProgress = (time: number) => {
+  const minutes = Math.floor((time % 3600000) / 60000);
+  const seconds = Math.floor((time % 60000) / 1000);
+  progress.value = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+};
+
+function convertFloat32ToInt16(buffer: any) {
+  let l = buffer.length;
+  const buf = new Int16Array(l);
+  while (l--) {
+      buf[l] = Math.min(1, buffer[l]) * 0x7FFF;
+  }
+  return buf.buffer;
+}
 </script>
 
 <template>
@@ -109,7 +172,7 @@ onBeforeUnmount(() => {
     <ChatMessages :kani="state.rootKani!" v-if="state.rootKani" ref="chatMessages" />
     <!-- msg bar -->
     <div class="chat-box">
-      <div class="controller-container" :class="{ 'paused': paused }" ref="controllerContainer">
+      <div class="controller-container" :class="{ 'paused': global_pause_count == 0 }" ref="controllerContainer">
         <p class="paused-expand">{{ progress }}</p>
         <div id="waveform" ref="waveformRef" class="waveform-container paused-expand"></div>
         <button @click="toggleMicrophone" class="start-interview has-fixed-size">

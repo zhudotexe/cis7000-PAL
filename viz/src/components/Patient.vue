@@ -8,7 +8,7 @@ const props = defineProps(['name', 'age', 'gender']);
     <img src="@/assets/faces/nervous.png" alt="Patient Image"/>
     <div class="description-container">
         <p><strong> {{ props.name }} </strong>, {{ props.age }}</p>
-        <p>{{ props.gender.toUpperCase()[0] + props.gender.slice(1) }}</p>
+        <!-- <p>{{ props.gender.toUpperCase()[0] + props.gender.slice(1) }}</p> -->
     </div>
 </template>
 

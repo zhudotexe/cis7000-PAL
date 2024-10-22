@@ -4,7 +4,7 @@ import ChatMessages from "@/components/ChatMessages.vue";
 import Patient from "@/components/Patient.vue";
 import PatientState from "@/components/PatientState.vue";
 import Tree from "@/components/Tree.vue";
-import { InteractiveClient } from "@/redel/interactive";
+import { InteractiveClient } from "@/pal/interactive-openai";
 import type { KaniState } from "@/redel/models";
 import { Notifications } from "@/redel/notifications";
 import { onMounted, onUnmounted, provide, reactive, ref } from "vue";
@@ -19,8 +19,9 @@ const router = useRouter();
 const client = reactive(new InteractiveClient(props.sessionId));
 const introspectedKani = ref<KaniState | null>(null);
 const tree = ref<InstanceType<typeof Tree> | null>(null);
-const patient = {
-  name: "Jessie Smith",
+const patient = ref<InstanceType<typeof Patient> | null>(null);
+const patientData = {
+  name: "Sarah Smith",
   age: "38",
   gender: "nonbinary"
 }
@@ -54,7 +55,7 @@ onUnmounted(() => client.close());
       <!-- root chat -->
       <div class="column">
         <div class="header-container">
-          <Patient :name="patient.name" :age="patient.age" :gender="patient.gender" />
+          <Patient :name="patientData.name" :age="patientData.age" :gender="patientData.gender" ref="patient" />
         </div>
         <div class="left-container chat-container">
           <Chat class="mt-auto" />
