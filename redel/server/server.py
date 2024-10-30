@@ -1,8 +1,14 @@
 import asyncio
+import base64
+import io
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Awaitable, Callable, Collection
+
+from elevenlabs.client import AsyncElevenLabs
+from openai import AsyncOpenAI
+from pydub import AudioSegment
 
 try:
     from fastapi import Body, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, WebSocketException
@@ -16,7 +22,7 @@ except ImportError:
 
 from redel import ReDel
 from redel.config import DEFAULT_LOG_DIR
-from redel.events import Error, SendMessage
+from redel.events import Error, SendAudio, SendMessage
 from redel.utils import read_jsonl
 from .indexer import find_saves
 from .models import SaveMeta, SessionMeta, SessionState
@@ -60,6 +66,10 @@ class VizServer:
         # webserver
         self.fastapi = FastAPI(lifespan=self._lifespan)
         self.setup_app()
+
+        # pal
+        self.openai = AsyncOpenAI()
+        self.eleven = AsyncElevenLabs()
 
     # ==== utils ====
     async def reindex_saves(self):
@@ -186,11 +196,21 @@ class VizServer:
                 )
             manager = self.interactive_sessions[session_id]
             await manager.connect(websocket)
+            # await manager.register_tts_listener()  # todo disable switch
             while True:
                 try:
-                    data = await websocket.receive_text()
+                    data = await websocket.receive_json()
                     log.debug(f"got data from ws for session {session_id}: {data}")
-                    event = SendMessage.model_validate_json(data)  # todo additional message types
+
+                    # if it's an audio message, transcribe it
+                    if data["type"] == "send_audio":
+                        audio_event = SendAudio.model_validate(data)
+                        audio_bytes = base64.b64decode(audio_event.audio)
+                        transcript = await self.whisper_transcribe(audio_bytes)
+                        event = SendMessage(content=transcript)
+                    # otherwise push the message onto the queue
+                    else:
+                        event = SendMessage.model_validate(data)
                     await manager.msg_queue.put(event)
                 except WebSocketDisconnect:
                     manager.disconnect(websocket)
@@ -207,3 +227,18 @@ class VizServer:
                 " https://redel.readthedocs.io/en/latest/install.html#building-web-interface for more information."
             )
         self.fastapi.mount("/", StaticFiles(directory=VIZ_DIST, html=True), name="viz")
+
+    # ===== PAL utils =====
+    async def whisper_transcribe(self, audio_bytes: bytes) -> str:
+        # We assume the audio bytes are PCM16LE single channel 24kHz
+        audio = AudioSegment(data=audio_bytes, sample_width=2, channels=1, frame_rate=24000)
+        audio_io = io.BytesIO()
+        audio_io.name = "audio.mp3"
+        audio.export(audio_io, "mp3")
+        resp = await self.openai.audio.transcriptions.create(
+            file=audio_io,
+            model="whisper-1",
+            language="en",
+            response_format="json",
+        )
+        return resp.text

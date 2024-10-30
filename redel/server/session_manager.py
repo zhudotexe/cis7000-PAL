@@ -1,14 +1,17 @@
 import asyncio
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
 
 from redel import ReDel
-from redel.events import BaseEvent, RoundComplete
+from redel.events import AudioDelta, BaseEvent, KaniMessage, RoundComplete, StreamDelta
 from .models import SaveMeta, SessionMeta, SessionState
 
 if TYPE_CHECKING:
     from .server import VizServer
+
+_break_sentinel = object()
 
 
 class SessionManager:
@@ -21,6 +24,10 @@ class SessionManager:
         self.task = None
         self.msg_queue = asyncio.Queue()
         self.active_connections: list[WebSocket] = []
+
+        # tts
+        self._tts_queues = defaultdict(asyncio.Queue)
+        self._tts_tasks = set()
 
     # ==== lifecycle ====
     async def start(self):
@@ -81,3 +88,43 @@ class SessionManager:
         # update the server save info on each RoundComplete
         if isinstance(event, RoundComplete):
             self.server.saves[self.redel.session_id] = self.get_save_meta()
+
+    # ==== PAL ====
+    async def register_tts_listener(self):
+        async def on_event(event):
+            if isinstance(event, StreamDelta):
+                # for each text stream token, TTS task it if it does not exist
+                if event.id not in self._tts_tasks:
+                    task = asyncio.create_task(self._tts_impl(event.id))
+                    self._tts_tasks.add(task)
+                    task.add_done_callback(self._tts_tasks.discard)
+                # otherwise append the text to the processing stream
+                await self._tts_queues[event.id].put(event.delta)
+            if isinstance(event, KaniMessage) and event.id in self._tts_queues:
+                await self._tts_queues[event.id].put(_break_sentinel)
+
+        self.redel.add_listener(on_event)
+
+    async def _tts_impl(self, kani_id: str):
+        # 11labs' main library does not currently support async input streaming yet, so we use a community fork
+        # (which I forked to fix pip metadata)
+        # pip install "git+https://github.com/zhudotexe/elevenlabs-python-async-temp.git"
+
+        async def _stream():
+            q = self._tts_queues[kani_id]
+            while True:
+                item = await q.get()
+                if item is _break_sentinel:
+                    return
+                yield item
+
+        # noinspection PyTypeChecker
+        audio_stream = await self.server.eleven.generate(
+            text=_stream(),
+            voice="Brian",
+            model="eleven_turbo_v2_5",
+            stream=True,
+            output_format="pcm_24000",
+        )
+        async for audio_bytes in audio_stream:
+            self.redel.dispatch(AudioDelta(id=kani_id, delta=audio_bytes))

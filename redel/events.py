@@ -101,17 +101,13 @@ class RoundComplete(BaseEvent):
 
 
 # user events
-class UserMessageEvent(BaseEvent, abc.ABC):
-    request_audio_output: bool = True
-
-
-class SendMessage(UserMessageEvent):
+class SendMessage(BaseEvent):
     """Send a user message to the root kani and request a completion."""
     type: Literal["send_message"] = "send_message"
     content: str
 
 
-class SendAudioWhole(UserMessageEvent):
+class SendAudio(BaseEvent):
     """Send an audio message to the root kani, transcribe it, and request a completion."""
     type: Literal["kani_message"] = "send_audio"
     audio: str
