@@ -103,11 +103,21 @@ export enum ChatRole {
     delta: string;
     role: ChatRole;
   }
+
+  export interface AudioDelta extends BaseEvent {
+    id: string;
+    delta: string;
+  }
   
   // ---- client events ----
   export interface SendMessage extends BaseEvent {
     type: "send_message";
     content: string;
+  }
+
+  export interface SendAudio extends BaseEvent {
+    type: "send_audio";
+    audio: string;
   }
 
   // ---- openai-browser ----

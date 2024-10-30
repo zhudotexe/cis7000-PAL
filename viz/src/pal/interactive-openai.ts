@@ -1,5 +1,5 @@
 import { API, WS_BASE } from "@/redel/api";
-import type { BaseEvent, ChatMessage, RootMessage, SendMessage } from "@/pal/models";
+import type { BaseEvent, ChatMessage, RootMessage, AudioDelta, SendMessage, SendAudio } from "@/pal/models";
 import type { RealtimeEvent } from "@/pal/models";
 import { AudioQueueManager } from "@/pal/audio";
 import { ChatRole } from "@/pal/models";
@@ -100,7 +100,17 @@ export class InteractiveClient {
   }
 
   public appendAudio(audioData: Int16Array) {
-    this.client.appendInputAudio(audioData);
+    // this.client.appendInputAudio(audioData);
+
+    // Convert Int16Array to Base64
+    const uint8Array = new Uint8Array(audioData.buffer);
+    let binaryString = '';
+    for (let i = 0; i < uint8Array.length; i++) {
+      binaryString += String.fromCharCode(uint8Array[i]);
+    }
+
+    const payload: SendAudio = { type: "send_audio", audio: btoa(binaryString) };
+    this.ws?.send(JSON.stringify(payload));
   }
 
   // ==== utils ====
@@ -132,8 +142,17 @@ export class InteractiveClient {
       console.warn(e);
       return;
     }
-    this.state.handleEvent(message);
-    this.events.dispatchEvent(new CustomEvent(message.type, { detail: message }));
+    if (message.type === "audio_delta") {
+      let delta = atob((message as AudioDelta).delta)
+      const audioDelta8 = new Uint8Array(delta.length);
+      for (let i = 0; i < delta.length; i++) {
+        audioDelta8[i] = delta.charCodeAt(i);
+      }
+      this.audioQueueManager.addAudioToQueue(new Int16Array(audioDelta8));
+    } else {
+      this.state.handleEvent(message);
+      this.events.dispatchEvent(new CustomEvent(message.type, { detail: message }));
+    }
   }
 
   onWSOpen() {
