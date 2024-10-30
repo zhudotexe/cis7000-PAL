@@ -83,6 +83,16 @@ class StreamDelta(BaseEvent):
     role: ChatRole
 
 
+class AudioDelta(BaseEvent):
+    """A kani is streaming and is playing this audio."""
+
+    __log_event__ = False
+
+    type: Literal["kani_message"] = "audio_delta"
+    id: str
+    delta: str
+
+
 class RoundComplete(BaseEvent):
     """The root kani has finished a full round and control should be handed off to the user."""
 
@@ -91,6 +101,22 @@ class RoundComplete(BaseEvent):
 
 
 # user events
-class SendMessage(BaseEvent):
+class UserMessageEvent(BaseEvent, abc.ABC):
+    request_audio_output: bool = True
+
+
+class SendMessage(UserMessageEvent):
+    """Send a user message to the root kani and request a completion."""
     type: Literal["send_message"] = "send_message"
     content: str
+
+
+class SendAudioWhole(UserMessageEvent):
+    """Send an audio message to the root kani, transcribe it, and request a completion."""
+    type: Literal["kani_message"] = "send_audio"
+    audio: str
+
+# todo if we want to do realtime streaming
+# class SendAudioStream(BaseEvent):
+#     type: Literal["kani_message"] = "send_audio_chunk"
+#     delta: str
