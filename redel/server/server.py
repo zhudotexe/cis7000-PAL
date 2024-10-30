@@ -190,6 +190,7 @@ class VizServer:
                 try:
                     data = await websocket.receive_text()
                     log.debug(f"got data from ws for session {session_id}: {data}")
+                    # TODO: handle audio buffer messages
                     event = SendMessage.model_validate_json(data)  # todo additional message types
                     await manager.msg_queue.put(event)
                 except WebSocketDisconnect:

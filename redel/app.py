@@ -11,6 +11,7 @@ from weakref import WeakValueDictionary
 import kani.exceptions
 from kani import ChatRole, chat_in_terminal_async
 from kani.engines import BaseEngine
+from kani.ext.realtime import OpenAIRealtimeKani, chat_in_terminal_audio_async
 
 from . import events
 from .base_kani import BaseKani
@@ -198,6 +199,7 @@ class ReDel:
         while True:
             # main loop
             try:
+                # TODO: add audio buffer
                 user_msg = await q.get()
                 log.info(f"Message from queue: {user_msg.content!r}")
                 async for stream in self.root_kani.full_round_stream(user_msg.content):
@@ -212,10 +214,11 @@ class ReDel:
 
     async def chat_in_terminal(self):
         """Chat with the defined system in the terminal. Prints function calls and root messages to the terminal."""
+        await self.root_kani.connect()  # additional step needed to connect to the Realtime API
         await self.ensure_init()
         while True:
             try:
-                await chat_in_terminal_async(self.root_kani, show_function_args=True, rounds=1)
+                await chat_in_terminal_audio_async(self.root_kani, show_function_args=True, rounds=1)
             except KeyboardInterrupt:
                 await self.close()
             finally:
