@@ -196,7 +196,7 @@ class VizServer:
                 )
             manager = self.interactive_sessions[session_id]
             await manager.connect(websocket)
-            # await manager.register_tts_listener()  # todo disable switch
+            await manager.register_tts_listener()  # todo disable switch
             while True:
                 try:
                     data = await websocket.receive_json()

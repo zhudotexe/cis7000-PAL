@@ -103,14 +103,17 @@ export class InteractiveClient {
     // this.client.appendInputAudio(audioData);
 
     // Convert Int16Array to Base64
-    const uint8Array = new Uint8Array(audioData.buffer);
-    let binaryString = '';
-    for (let i = 0; i < uint8Array.length; i++) {
-      binaryString += String.fromCharCode(uint8Array[i]);
+    var bytes = new Uint8Array(audioData.buffer, audioData.byteOffset, audioData.byteLength);
+    var binary = '';
+    for (var i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
     }
 
-    const payload: SendAudio = { type: "send_audio", audio: btoa(binaryString) };
+    const payload: SendAudio = { type: "send_audio", audio: btoa(binary) };
     this.ws?.send(JSON.stringify(payload));
+
+    // Uncomment to playback audio
+    // this.audioQueueManager.addAudioToQueue(this.base64ToInt16Array(payload.audio));
   }
 
   // ==== utils ====
@@ -142,13 +145,9 @@ export class InteractiveClient {
       console.warn(e);
       return;
     }
+    console.log(message.type);
     if (message.type === "audio_delta") {
-      let delta = atob((message as AudioDelta).delta)
-      const audioDelta8 = new Uint8Array(delta.length);
-      for (let i = 0; i < delta.length; i++) {
-        audioDelta8[i] = delta.charCodeAt(i);
-      }
-      this.audioQueueManager.addAudioToQueue(new Int16Array(audioDelta8));
+      this.audioQueueManager.addAudioToQueue(this.base64ToInt16Array((message as AudioDelta).delta));
     } else {
       this.state.handleEvent(message);
       this.events.dispatchEvent(new CustomEvent(message.type, { detail: message }));
@@ -237,20 +236,5 @@ export class InteractiveClient {
       bytes[i] = binaryString.charCodeAt(i);
     }
     return new Int16Array(bytes.buffer);
-  }  private audioContext: AudioContext = new AudioContext();
-
-  private processAudioData(audioData: Int16Array): void {
-    const audioBuffer = this.audioContext.createBuffer(1, audioData.length, 16000);
-    const channelData = audioBuffer.getChannelData(0);
-  
-    // Convert Int16Array to Float32Array (normalized between -1 and 1)
-    for (let i = 0; i < audioData.length; i++) {
-      channelData[i] = audioData[i] / 32768; // Int16 max value
-    }
-  
-    const source = this.audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(this.audioContext.destination);
-    source.start();
-  }
+  } 
 }

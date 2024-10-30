@@ -7,6 +7,7 @@ import autosize from "autosize";
 import WaveSurfer from "wavesurfer.js";
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record.esm.js';
 import { inject, nextTick, onMounted, onBeforeUnmount, ref, shallowRef } from "vue";
+import { blob } from "d3";
 
 
 const client = inject<InteractiveClient>("client")!;
@@ -22,6 +23,9 @@ const paused = ref(true);
 const global_pause_count = ref(0);
 const progress = ref("00:00");
 let record: any = null;
+
+// audio capture toggle
+let push_to_talk = true;
 
 const inputAudioBuffer = shallowRef<Int16Array[] | null>(null);
 const inputAudioContext = shallowRef<AudioContext | null>(null);
@@ -43,6 +47,9 @@ async function sendChatMsg() {
 }
 
 async function startRealtimeListening() {
+  if (push_to_talk)
+    return;
+
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -108,6 +115,12 @@ const createWaveSurfer = () => {
   record.on('record-progress', (time: number) => {
     updateProgress(time);
   });
+
+  if (push_to_talk) {
+    record.on('record-data-available', (blob: Blob) => {
+      recordDataAvailable(blob);
+    });
+  }
 };
 
 async function toggleMicrophone() {
@@ -119,7 +132,12 @@ async function toggleMicrophone() {
       record.resumeRecording();
       global_pause_count.value += 1;
     } else {
-      record.pauseRecording();
+      if (push_to_talk) {
+        record.stopRecording();
+        global_pause_count.value = 0;
+      } else {
+        record.pauseRecording();
+      }
     }
   } else {
     paused.value = false;
@@ -154,6 +172,26 @@ const updateProgress = (time: number) => {
   const seconds = Math.floor((time % 60000) / 1000);
   progress.value = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 };
+
+async function recordDataAvailable(blob: Blob) {
+  const audioBuffer = await blob.arrayBuffer();
+  const audioContext = new AudioContext({ sampleRate: 24000 });
+  audioContext.decodeAudioData(audioBuffer, (decodedData) => {
+      const sampleRate = audioContext.sampleRate;
+      const numChannels = decodedData.numberOfChannels;
+      const length = decodedData.length * numChannels;
+      const audio = new Int16Array(length);
+      for (let i = 0; i < decodedData.length; i++) {
+          for (let channel = 0; channel < numChannels; channel++) {
+              const sample = decodedData.getChannelData(channel)[i];
+              audio[i * numChannels + channel] = Math.max(-1, Math.min(1, sample)) * 32767; // Convert to 16-bit PCM
+          }
+      }
+      client.appendAudio(audio);
+  }, (error) => {
+      console.error('Error decoding audio data:', error);
+  });
+}
 
 function convertFloat32ToInt16(buffer: any) {
   let l = buffer.length;

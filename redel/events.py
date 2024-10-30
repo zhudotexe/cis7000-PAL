@@ -88,7 +88,7 @@ class AudioDelta(BaseEvent):
 
     __log_event__ = False
 
-    type: Literal["kani_message"] = "audio_delta"
+    type: Literal["audio_delta"] = "audio_delta"
     id: str
     delta: str
 
@@ -111,7 +111,7 @@ class SendMessage(BaseEvent):
 class SendAudio(BaseEvent):
     """Send an audio message to the root kani, transcribe it, and request a completion."""
 
-    type: Literal["kani_message"] = "send_audio"
+    type: Literal["send_audio"] = "send_audio"
     audio: str
 
 
