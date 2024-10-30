@@ -211,6 +211,7 @@ class VizServer:
                     # otherwise push the message onto the queue
                     else:
                         event = SendMessage.model_validate(data)
+
                     await manager.msg_queue.put(event)
                 except WebSocketDisconnect:
                     manager.disconnect(websocket)

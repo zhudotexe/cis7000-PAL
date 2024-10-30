@@ -6,6 +6,8 @@ from kani import ChatMessage, ChatRole, Kani
 from kani.engines.base import BaseCompletion
 from kani.engines.openai import OpenAIEngine
 from kani.streaming import StreamManager
+from kani.ext.realtime import OpenAIRealtimeKani, chat_in_terminal_audio_async
+
 
 from . import events
 from .state import KaniState, RunState
@@ -15,7 +17,7 @@ if TYPE_CHECKING:
     from .app import ReDel
 
 
-class BaseKani(Kani):
+class BaseKani(OpenAIRealtimeKani):
     """
     Base class for all kani in the application, regardless of recursive delegation.
 
