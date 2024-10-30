@@ -8,6 +8,8 @@ from redel import ReDel
 from redel.events import AudioDelta, BaseEvent, KaniMessage, RoundComplete, StreamDelta
 from .models import SaveMeta, SessionMeta, SessionState
 
+import base64
+
 if TYPE_CHECKING:
     from .server import VizServer
 
@@ -127,4 +129,5 @@ class SessionManager:
             output_format="pcm_24000",
         )
         async for audio_bytes in audio_stream:
-            self.redel.dispatch(AudioDelta(id=kani_id, delta=audio_bytes))
+            audio_string = base64.b64encode(audio_bytes).decode('utf-8')
+            self.redel.dispatch(AudioDelta(id=kani_id, delta=audio_string))
