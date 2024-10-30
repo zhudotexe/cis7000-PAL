@@ -11,6 +11,8 @@ import {
   faFolderOpen,
   faHashtag,
   faSearch,
+  faPlay,
+  faPause
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -32,6 +34,8 @@ library.add(
   faHashtag,
   faFile,
   faCirclePlus,
+  faPlay,
+  faPause
 );
 
 // ==== init ====
