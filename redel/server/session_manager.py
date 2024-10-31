@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
@@ -7,8 +8,6 @@ from fastapi import WebSocket
 from redel import ReDel
 from redel.events import AudioDelta, BaseEvent, KaniMessage, RoundComplete, StreamDelta
 from .models import SaveMeta, SessionMeta, SessionState
-
-import base64
 
 if TYPE_CHECKING:
     from .server import VizServer
@@ -29,7 +28,7 @@ class SessionManager:
 
         # tts
         self._tts_queues = defaultdict(asyncio.Queue)
-        self._tts_tasks = set()
+        self._tts_tasks = {}
 
     # ==== lifecycle ====
     async def start(self):
@@ -98,8 +97,8 @@ class SessionManager:
                 # for each text stream token, TTS task it if it does not exist
                 if event.id not in self._tts_tasks:
                     task = asyncio.create_task(self._tts_impl(event.id))
-                    self._tts_tasks.add(task)
-                    task.add_done_callback(self._tts_tasks.discard)
+                    self._tts_tasks[event.id] = task
+                    task.add_done_callback(lambda _: self._tts_tasks.pop(event.id, None))
                 # otherwise append the text to the processing stream
                 await self._tts_queues[event.id].put(event.delta)
             if isinstance(event, KaniMessage) and event.id in self._tts_queues:
@@ -129,5 +128,5 @@ class SessionManager:
             output_format="pcm_24000",
         )
         async for audio_bytes in audio_stream:
-            audio_string = base64.b64encode(audio_bytes).decode('utf-8')
+            audio_string = base64.b64encode(audio_bytes).decode("utf-8")
             self.redel.dispatch(AudioDelta(id=kani_id, delta=audio_string))
