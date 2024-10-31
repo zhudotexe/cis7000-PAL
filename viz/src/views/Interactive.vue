@@ -94,6 +94,9 @@ $header-height: 8rem;
 .main {
   height: 100vh;
 }
+.column:last-child {
+  max-width: 300px;
+}
 
 .header-container {
   display: flex;
