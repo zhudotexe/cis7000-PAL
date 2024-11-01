@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
+from kani import ChatRole
 
 from redel import ReDel
 from redel.events import AudioDelta, BaseEvent, KaniMessage, RoundComplete, StreamDelta
@@ -101,7 +102,7 @@ class SessionManager:
                     task.add_done_callback(lambda _: self._tts_tasks.pop(event.id, None))
                 # otherwise append the text to the processing stream
                 await self._tts_queues[event.id].put(event.delta)
-            if isinstance(event, KaniMessage) and event.id in self._tts_queues:
+            if isinstance(event, KaniMessage) and event.id in self._tts_queues and event.msg.role == ChatRole.ASSISTANT:
                 await self._tts_queues[event.id].put(_break_sentinel)
 
         self.redel.add_listener(on_event)
