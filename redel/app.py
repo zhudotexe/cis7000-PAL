@@ -104,24 +104,6 @@ class ReDel:
         # kanis
         self.kani = None
 
-    def get_config(self, **kwargs):
-        """
-        Get a dictionary with arguments suitable for passing to a ReDel constructor to create a new instance with
-        mostly the same configuration.
-
-        By default, the title, log_dir, and session_id will not be copied. Explicitly set these as keyword
-        arguments if you want to copy them.
-
-        Pass keyword arguments to override existing configuration options (valid arguments are same as constructor).
-        """
-        config = {
-            "engine": self.engine,
-            "system_prompt": self.system_prompt,
-            "kani_kwargs": self.kani_kwargs,
-        }
-        config.update(kwargs)
-        return config
-
     async def ensure_init(self):
         """Called at least once before any messaging happens. Used to do async init. Must be idempotent."""
         async with self._init_lock:  # lock in case of parallel calls - no double creation

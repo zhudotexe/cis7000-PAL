@@ -4,9 +4,10 @@ import io
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Annotated, Awaitable, Callable, Collection
+from typing import Annotated, Collection
 
 from elevenlabs.client import AsyncElevenLabs
+from kani.engines import BaseEngine
 from openai import AsyncOpenAI
 from pydub import AudioSegment
 
@@ -35,26 +36,25 @@ log = logging.getLogger("server")
 class VizServer:
     def __init__(
         self,
-        redel_proto: ReDel = None,
-        /,
         *,
+        # config for kanis
+        engine: BaseEngine = None,
+        system_prompt: str | None = None,
+        kani_kwargs: dict = None,
+        # replay
         save_dirs: Collection[Path] = (DEFAULT_LOG_DIR,),
-        redel_factory: Callable[[], Awaitable[ReDel]] = None,
     ):
         """
-        :param redel_proto: If passed, interactive sessions will use the same configuration as the given prototype.
-            Mutually exclusive with ``redel_factory``.
+        :param engine: The engine to use for each kani managed by this server. (default: gpt-4o)
+            See :external+kani:doc:`engines` for a list of available engines and their capabilities.
+        :param system_prompt: The system prompt for each new kani managed by this server.
+        :param kani_kwargs: Additional keyword args to pass to :class:`kani.Kani`.
         :param save_dirs: A list of paths to scan for ReDel saves to make available to load. Defaults to
             ``~/.redel/instances/``.
-        :param redel_factory: An asynchronous function that creates a new :class:`.ReDel` instance when called.
-            If this is set, ``redel_proto`` must not be set.
         """
-        if redel_proto and redel_factory:
-            raise ValueError("At most one of ('redel_proto', 'redel_factory') may be supplied.")
-        elif not (redel_proto or redel_factory):
-            redel_proto = ReDel()
-        self.redel_proto = redel_proto
-        self.redel_factory = redel_factory
+        self.engine = engine
+        self.system_prompt = system_prompt
+        self.kani_kwargs = kani_kwargs
 
         # saves
         self.save_dirs = save_dirs
@@ -88,9 +88,14 @@ class VizServer:
 
     async def create_new_redel(self) -> ReDel:
         """Return a new ReDel instance given the server config."""
-        if self.redel_proto:
-            return ReDel(**self.redel_proto.get_config())
-        return await self.redel_factory()
+        return ReDel(engine=self.engine, system_prompt=self.system_prompt, kani_kwargs=self.kani_kwargs)
+
+    async def append_new_redel(self, redel: ReDel):
+        """Start tracking the given redel in this server."""
+        manager = SessionManager(self, redel)
+        self.interactive_sessions[redel.session_id] = manager
+        self.saves[redel.session_id] = manager.get_save_meta()
+        await manager.start()
 
     def serve(self, host="127.0.0.1", port=8000, **kwargs):
         """Serve this server at the given IP and port. Blocks until interrupted."""
@@ -170,10 +175,7 @@ class VizServer:
             # create a new redel instance given the settings
             redel = await self.create_new_redel()
             # assign it to a sessionmanager and start
-            manager = SessionManager(self, redel)
-            self.interactive_sessions[redel.session_id] = manager
-            self.saves[redel.session_id] = manager.get_save_meta()
-            await manager.start()
+            manager = await self.append_new_redel(redel)
             if start_content:
                 await manager.msg_queue.put(SendMessage(content=start_content))
             return manager.get_state()
