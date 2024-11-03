@@ -44,9 +44,6 @@ class AIFunctionState(BaseModel):
 
 class KaniState(BaseModel):
     id: str
-    depth: int
-    parent: str | None
-    children: list[str]
     always_included_messages: list[ChatMessage]
     chat_history: list[ChatMessage]
     state: RunState
@@ -59,9 +56,6 @@ class KaniState(BaseModel):
     def from_kani(cls, ai: "BaseKani", **kwargs):
         return cls(
             id=ai.id,
-            depth=ai.depth,
-            parent=ai.parent.id if ai.parent else None,
-            children=list(ai.children),
             always_included_messages=ai.always_included_messages,
             chat_history=ai.chat_history,
             state=ai.state,

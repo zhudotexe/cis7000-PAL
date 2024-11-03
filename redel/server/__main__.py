@@ -35,10 +35,7 @@ if not args.no_default_save_dir:
     save_dirs = (DEFAULT_LOG_DIR, *save_dirs)
 
 # Define the configuration for each interactive session
-proto = ReDel(
-    title=AUTOGENERATE_TITLE,
-    delegation_scheme=None,
-)
+proto = ReDel(title=AUTOGENERATE_TITLE)
 
 print("Launching a minimal ReDel server with web browsing.")
 print()

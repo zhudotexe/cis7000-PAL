@@ -1,16 +1,5 @@
 """
 Example server for the ReDel web interface.
-
-Environment Variables:
-- OPENAI_API_KEY
-- ANTHROPIC_API_KEY (optional)
-
-Configuration:
-- root engine: gpt-4
-- delegate engine: gpt-4
-- tools:
-    - Browsing (always included in delegates)
-        - long engine: claude-3-opus (for summarizing long webpages, if ANTHROPIC_API_KEY is set)
 """
 
 import logging
@@ -22,7 +11,6 @@ from kani.ext.ratelimits import RatelimitedEngine
 
 from redel import AUTOGENERATE_TITLE, ReDel
 from redel.server import VizServer
-from redel.tools.browsing import Browsing
 
 # Define the engines
 engine = OpenAIEngine(model="gpt-4", temperature=0.8, top_p=0.95)
@@ -34,17 +22,7 @@ else:
     long_engine = None
 
 # Define the configuration for each interactive session
-ai = ReDel(
-    root_engine=engine,
-    delegate_engine=engine,
-    title=AUTOGENERATE_TITLE,
-    tool_configs={
-        Browsing: {
-            "always_include": True,
-            "kwargs": {"long_engine": long_engine},
-        },
-    },
-)
+ai = ReDel(engine=engine, title=AUTOGENERATE_TITLE)
 
 # configure and start the server
 server = VizServer(ai)

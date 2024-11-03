@@ -35,9 +35,6 @@ export enum ChatRole {
   // from redel.state
   export interface KaniState {
     id: string;
-    depth: number;
-    parent: string | null;
-    children: string[];
     always_included_messages: ChatMessage[];
     chat_history: ChatMessage[];
     state: RunState;

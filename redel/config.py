@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 # ==== core ====
-REDEL_HOME = Path(os.getenv("REDEL_HOME", "~/.redel")).expanduser()
+REDEL_HOME = Path(__file__).parents[1] / ".redel"
 
 # caching of embeddings, etc
 REDEL_CACHE_DIR = Path(os.getenv("REDEL_CACHE", "~/.cache/redel")).expanduser()
