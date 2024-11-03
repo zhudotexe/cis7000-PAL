@@ -96,6 +96,7 @@ class VizServer:
         self.interactive_sessions[redel.session_id] = manager
         self.saves[redel.session_id] = manager.get_save_meta()
         await manager.start()
+        return manager
 
     def serve(self, host="127.0.0.1", port=8000, **kwargs):
         """Serve this server at the given IP and port. Blocks until interrupted."""
