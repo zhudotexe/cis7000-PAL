@@ -22,6 +22,7 @@ def find_saves(fp: Path) -> Iterable[SaveMeta]:
                 event_fp=event_fp,
                 id=data["id"],
                 title=data["title"],
+                extra=data.get("extra", {}),
                 last_modified=data["last_modified"],
                 n_events=data["n_events"],
             )

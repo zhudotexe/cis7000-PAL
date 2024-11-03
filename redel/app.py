@@ -14,7 +14,7 @@ from kani.engines import BaseEngine
 from . import events
 from .base_kani import BaseKani
 from .eventlogger import EventLogger
-from .utils import AUTOGENERATE_TITLE, AutogenerateTitle, generate_conversation_title
+from .utils import AUTOGENERATE_TITLE, AutogenerateTitle, FrontendExtra, generate_conversation_title
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +58,8 @@ class ReDel:
         log_dir: Path = None,
         clear_existing_log: bool = False,
         session_id: str = None,
+        # frontend extras
+        extra: FrontendExtra = None,
     ):
         """
         :param engine: The engine to use for the kani. (default: gpt-4o)
@@ -72,17 +74,21 @@ class ReDel:
             Otherwise, append to existing events.
         :param session_id: The ID of this session. Generally this should not be set manually; it is used for loading
             previous states.
+        :param extra: Additional information to send to the frontend.
         """
         if engine is None:
             engine = default_engine()
         if kani_kwargs is None:
             kani_kwargs = {}
+        if extra is None:
+            extra = {}
 
         # engines
         self.engine = engine
         # prompt/kani
         self.system_prompt = system_prompt
         self.kani_kwargs = kani_kwargs
+        self.extra = extra
 
         # internals
         self._init_lock = asyncio.Lock()

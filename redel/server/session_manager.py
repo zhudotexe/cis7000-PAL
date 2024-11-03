@@ -50,6 +50,7 @@ class SessionManager:
             title=self.redel.title,
             last_modified=self.redel.logger.last_modified,
             n_events=self.redel.logger.event_count.total(),
+            extra=self.redel.extra,
             state=kanis,
         )
 
@@ -59,6 +60,7 @@ class SessionManager:
             title=self.redel.title,
             last_modified=self.redel.logger.last_modified,
             n_events=self.redel.logger.event_count.total(),
+            extra=self.redel.extra,
         )
 
     def get_save_meta(self) -> SaveMeta:
@@ -67,6 +69,7 @@ class SessionManager:
             title=self.redel.title,
             last_modified=self.redel.logger.last_modified,
             n_events=self.redel.logger.event_count.total(),
+            extra=self.redel.extra,
             grouping_prefix=self.redel.logger.log_dir.parent.parts,
             state_fp=self.redel.logger.state_path,
             event_fp=self.redel.logger.aof_path,

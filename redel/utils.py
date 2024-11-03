@@ -1,7 +1,7 @@
 import itertools
 import json
 import uuid
-from typing import Iterable, TYPE_CHECKING, TypeVar
+from typing import Iterable, TYPE_CHECKING, TypeVar, TypedDict
 
 from kani import Kani
 
@@ -45,6 +45,14 @@ async def generate_conversation_title(ai: "BaseKani"):
     return title.strip(' "')
 
 
+# ===== frontend =====
+class FrontendExtra(TypedDict, total=False):
+    """Extra information to send to the frontend. All value types must be JSON serializable."""
+
+    patient_info: str
+
+
+# ===== utils =====
 def batched(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
     # batched('ABCDEFG', 3) --> ABC DEF G
     if n < 1:
