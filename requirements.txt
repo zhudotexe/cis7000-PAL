@@ -1,4 +1,4 @@
--e .[all]
+-e .
 
 # PAL
 git+https://github.com/zhudotexe/elevenlabs-python-async-temp.git
@@ -12,15 +12,15 @@ isort
 hatch
 twine
 
-# docs
-furo~=2024.5.6
-matplotlib>=3.0.0,<4.0.0  # depended on by opengraph
-myst-parser~=3.0.1
-sphinx~=7.4.5
-sphinxcontrib-video~=0.2.1
-sphinxemoji~=0.3.1
-sphinx-copybutton~=0.5.2
-sphinx-inline-tabs~=2023.4.21
+# # docs
+# furo~=2024.5.6
+# matplotlib>=3.0.0,<4.0.0  # depended on by opengraph
+# myst-parser~=3.0.1
+# sphinx~=7.4.5
+# sphinxcontrib-video~=0.2.1
+# sphinxemoji~=0.3.1
+# sphinx-copybutton~=0.5.2
+# sphinx-inline-tabs~=2023.4.21
 
 # # ===== experiments =====
 # # See the demo/emnlp branch on GitHub for our experiment implementations!
