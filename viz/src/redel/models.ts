@@ -59,6 +59,7 @@ export interface SessionMeta {
   title: string | null;
   last_modified: number;
   n_events: number;
+  extra: any;
 }
 
 export interface SaveMeta extends SessionMeta {

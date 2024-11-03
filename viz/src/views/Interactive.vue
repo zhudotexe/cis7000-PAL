@@ -6,6 +6,7 @@ import { InteractiveClient } from "@/pal/interactive-openai";
 import { Notifications } from "@/redel/notifications";
 import { onMounted, onUnmounted, provide, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
+import Markdown from "@/components/Markdown.vue";
 
 const props = defineProps<{
   sessionId: string;
@@ -56,6 +57,8 @@ onUnmounted(() => client.close());
         <div class="right-container is-flex is-flex-direction-column">
           <p class="subtitle feedback-title">Feedback and Patient State Dashboard</p>
           <PatientState :affectValence="30" :affectArousal="32" :affectDominance="20" />
+          <!-- TODO(allen): make this look nice -->
+          <Markdown class="content" :content="client.state.meta?.extra?.patient_info ?? 'No patient info'" />
         </div>
       </div>
     </div>
