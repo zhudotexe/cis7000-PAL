@@ -1,6 +1,5 @@
 #!/bin/bash
 
-git pull
 uv pip install -r requirements.txt
 
 pushd viz
