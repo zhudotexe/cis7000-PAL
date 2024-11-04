@@ -16,4 +16,4 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
       - name: Restart service
-        run: ssh ${{ secrets.SSH_DESTINATION }} "cd cis7000-PAL && git pull && source scripts/arcadia-deploy.sh"
+        run: ssh ${{ secrets.SSH_DESTINATION }} "cd cis7000-PAL && git pull && bash scripts/arcadia-deploy.sh"
