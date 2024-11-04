@@ -16,4 +16,4 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
       - name: Restart service
-        run: ssh ${{ secrets.SSH_DESTINATION }} "cd cis7000-PAL && git pull https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git && uv pip install -r requirements.txt && systemctl restart pal7k.zhu.codes;"
+        run: ssh ${{ secrets.SSH_DESTINATION }} "cd cis7000-PAL && source scripts/arcadia-deploy.sh"

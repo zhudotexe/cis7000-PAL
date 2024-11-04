@@ -2,8 +2,8 @@ import type { BaseEvent, SaveMeta, SessionState } from "@/redel/models";
 import { Notifications } from "@/redel/notifications";
 import axios from "axios";
 
-export const API_BASE = "http://127.0.0.1:8000/api";
-export const WS_BASE = "ws://127.0.0.1:8000/api/ws";
+export const API_BASE = import.meta.env.VITE_API_BASE;
+export const WS_BASE = import.meta.env.VITE_WS_BASE;
 
 // On error, automatically add an error notification to Notifications.
 axios.interceptors.request.use(
