@@ -5,7 +5,7 @@ import SaveViewer from "@/views/SaveViewer.vue";
 import { nextTick } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
 
-const DEFAULT_TITLE = "ReDel Web";
+const DEFAULT_TITLE = "PAL Web";
 
 const routes = [
   { path: "/", name: "home", component: Home },

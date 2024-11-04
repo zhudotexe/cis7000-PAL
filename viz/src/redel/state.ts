@@ -29,12 +29,9 @@ export class ReDelState {
     // hydrate the app state
     for (const kani of data.state) {
       this.kaniMap.set(kani.id, kani);
-      // also set up the root chat state
-      if (kani.parent === null) {
-        this.rootKani = kani;
-        // ensure it is a copy
-        this.rootMessages = [...kani.chat_history];
-      }
+      this.rootKani = kani;
+      // ensure it is a copy
+      this.rootMessages = [...kani.chat_history];
     }
   }
 
@@ -64,20 +61,10 @@ export class ReDelState {
   onKaniSpawn(data: KaniSpawn) {
     this.kaniMap.set(data.id, data);
     // set up the root iff it's null
-    if (data.parent === null) {
-      if (!this.rootKani) {
-        this.rootKani = data;
-        this.rootMessages = [...data.chat_history];
-      }
-      return;
+    if (!this.rootKani) {
+      this.rootKani = data;
+      this.rootMessages = [...data.chat_history];
     }
-    const parent = this.kaniMap.get(data.parent);
-    if (!parent) {
-      console.warn("Got kani_spawn event but parent kani does not exist!");
-      return;
-    }
-    if (parent.children.includes(data.id)) return;
-    parent.children.push(data.id);
   }
 
   onKaniStateChange(data: KaniStateChange) {
@@ -136,19 +123,10 @@ export class ReDelState {
   }
 
   undoKaniSpawn(data: KaniSpawn) {
-    if (data.parent) {
-      const parent = this.kaniMap.get(data.parent);
-      if (parent && parent.children.includes(data.id)) {
-        parent.children.splice(parent.children.indexOf(data.id), 1);
-      } else {
-        console.warn("Undoing kani_spawn event but parent kani does not exist or is missing child!");
-      }
-    } else {
-      // delete the root iff it's null
-      if (this.rootKani) {
-        this.rootKani = undefined;
-        this.rootMessages = [];
-      }
+    // delete the root iff it's null
+    if (this.rootKani) {
+      this.rootKani = undefined;
+      this.rootMessages = [];
     }
     this.kaniMap.delete(data.id);
   }

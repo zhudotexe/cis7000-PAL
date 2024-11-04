@@ -168,7 +168,7 @@ onMounted(async () => {
             <Tree @node-clicked="(id) => (introspectedKaniId = id)" :selected-id="introspectedKaniId" ref="tree" />
           </div>
           <p v-if="introspectedKani" class="has-text-centered">
-            Selected: {{ introspectedKani.name }}-{{ introspectedKani.depth }}
+            Selected: {{ introspectedKani.name }}
           </p>
           <div class="introspection-container">
             <ChatMessages :kani="introspectedKani" v-if="introspectedKani" />

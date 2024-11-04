@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from typing import AsyncIterable, TYPE_CHECKING
-from weakref import WeakValueDictionary
 
 from kani import ChatMessage, ChatRole, Kani
 from kani.engines.base import BaseCompletion
@@ -27,10 +26,8 @@ class BaseKani(Kani):
         self,
         *args,
         app: "ReDel",
-        parent: "BaseKani" = None,
         id: str = None,
         name: str = None,
-        dispatch_creation: bool = True,
         **kwargs,
     ):
         """
@@ -44,19 +41,10 @@ class BaseKani(Kani):
         super().__init__(*args, **kwargs)
         self.state = RunState.STOPPED
         self._old_state_stack = []
-        # tree management
-        if parent is not None:
-            self.depth = parent.depth + 1
-        else:
-            self.depth = 0
-        self.parent = parent
-        self.children = WeakValueDictionary()
         # app management
         self.id = create_kani_id() if id is None else id
         self.name = self.id if name is None else name
         self.app = app
-        if dispatch_creation:
-            app.on_kani_creation(self)
 
     # ==== overrides ====
     async def get_model_completion(self, include_functions: bool = True, **kwargs) -> BaseCompletion:
@@ -114,8 +102,8 @@ class BaseKani(Kani):
     async def add_to_history(self, message: ChatMessage):
         await super().add_to_history(message)
         self.app.dispatch(events.KaniMessage(id=self.id, msg=message))
-        if self.parent is None:
-            self.app.dispatch(events.RootMessage(msg=message))
+        # we don't have a hierarchy in PAL but we should dispatch this anyway since the FE might want it
+        self.app.dispatch(events.RootMessage(msg=message))
 
     async def add_completion_to_history(self, completion):
         message = await super().add_completion_to_history(completion)
