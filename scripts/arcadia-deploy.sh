@@ -1,4 +1,5 @@
 #!/bin/bash
+source ~/.bashrc
 
 uv pip install -r requirements.txt
 
