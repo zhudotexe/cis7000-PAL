@@ -6,6 +6,7 @@ import { InteractiveClient } from "@/pal/interactive-openai";
 import { Notifications } from "@/redel/notifications";
 import { onMounted, onUnmounted, provide, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
+import Markdown from "@/components/Markdown.vue";
 
 const props = defineProps<{
   sessionId: string;
@@ -15,14 +16,12 @@ const router = useRouter();
 
 const client = reactive(new InteractiveClient(props.sessionId));
 const patient = ref<InstanceType<typeof Patient> | null>(null);
-const patientData = {
-  name: "Sarah Smith",
-  age: "38",
-  gender: "nonbinary",
-};
 
 provide("client", client);
 provide("state", client.state);
+
+const isSpeechEnabled = ref(true);
+const chat = ref<InstanceType<typeof Chat> | null>(null);
 
 // hooks
 onMounted(async () => {
@@ -35,8 +34,14 @@ onMounted(async () => {
     return;
   }
   client.connect();
+  console.log(client.state.meta?.extra);
 });
 onUnmounted(() => client.close());
+
+function toggleSpeech() {
+  isSpeechEnabled.value = !isSpeechEnabled.value;
+  chat.value?.toggleSpeech();
+}
 </script>
 
 <template>
@@ -45,17 +50,33 @@ onUnmounted(() => client.close());
       <!-- root chat -->
       <div class="column">
         <div class="header-container">
-          <Patient :name="patientData.name" :age="patientData.age" :gender="patientData.gender" ref="patient" />
+          <Patient 
+          :name="client.state.meta?.extra?.patient_name ?? 'No patient name'" 
+          :age="client.state.meta?.extra?.patient_age ?? 'No patient age'" 
+          :gender="client.state.meta?.extra?.patient_gender ?? 'No patient gender'" 
+          :img="client.state.meta?.extra?.patient_image_url ?? '@/assets/faces/nervous.png'"
+          ref="patient" 
+        />
         </div>
         <div class="left-container chat-container">
-          <Chat class="mt-auto" />
+          <Chat class="mt-auto" ref="chat"/>
         </div>
       </div>
       <!-- viz -->
       <div class="column">
         <div class="right-container is-flex is-flex-direction-column">
-          <p class="subtitle feedback-title">Feedback and Patient State Dashboard</p>
-          <PatientState :affectValence="30" :affectArousal="32" :affectDominance="20" />
+          <!-- <p class="subtitle feedback-title">Feedback and Patient State Dashboard</p>
+          <PatientState :affectValence="30" :affectArousal="32" :affectDominance="20" /> -->
+          <!-- TODO(allen): make this look nice -->
+           <div class="flex content">
+            <h4>Speech Mode:</h4>
+            <label class="switch">
+                <input type="checkbox" :checked="isSpeechEnabled" @change="toggleSpeech">
+              <span class="slider round"></span>
+            </label>
+           </div>
+           <hr>
+          <Markdown class="content" :content="client.state.meta?.extra?.patient_info ?? 'No patient info'" />
         </div>
       </div>
     </div>
@@ -73,6 +94,9 @@ $header-height: 8rem;
 
 .column:last-child {
   max-width: 300px;
+  height: 100%;
+
+  overflow-y: scroll;
 }
 
 .header-container {
@@ -102,5 +126,87 @@ $header-height: 8rem;
 .feedback-title {
   text-align: center;
   font-weight: bold;
+}
+
+.right-container {
+  hr {
+    border: 1px solid gray;
+    margin: 15px 0;
+  }
+  h2 {
+    font-size: 1rem;
+  }
+}
+.flex.content {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0;
+
+  h4 {
+    margin: 0;
+  }
+}
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 25px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 0;
+  top: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }
 </style>

@@ -4,7 +4,7 @@ import io
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Annotated, Collection
+from typing import Annotated, Awaitable, Callable, Collection
 
 from elevenlabs.client import AsyncElevenLabs
 from kani.engines import BaseEngine
@@ -43,6 +43,8 @@ class VizServer:
         kani_kwargs: dict = None,
         # replay
         save_dirs: Collection[Path] = (DEFAULT_LOG_DIR,),
+        # helpers
+        startup_fn: Callable[["VizServer"], Awaitable] = None,
     ):
         """
         :param engine: The engine to use for each kani managed by this server. (default: gpt-4o)
@@ -51,10 +53,12 @@ class VizServer:
         :param kani_kwargs: Additional keyword args to pass to :class:`kani.Kani`.
         :param save_dirs: A list of paths to scan for ReDel saves to make available to load. Defaults to
             ``~/.redel/instances/``.
+        :param startup_fn: An async function to call before server startup.
         """
         self.engine = engine
         self.system_prompt = system_prompt
         self.kani_kwargs = kani_kwargs
+        self.startup_fn = startup_fn
 
         # saves
         self.save_dirs = save_dirs
@@ -108,6 +112,8 @@ class VizServer:
     @asynccontextmanager
     async def _lifespan(self, _: FastAPI):
         _ = asyncio.create_task(self.reindex_saves())
+        if self.startup_fn is not None:
+            await self.startup_fn(self)
         yield
         await asyncio.gather(*(session.close() for session in self.interactive_sessions.values()))
 

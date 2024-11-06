@@ -8,11 +8,13 @@ import {
   type KaniStateChange,
   type RootMessage,
   RunState,
+  type SessionMeta,
   type SessionState,
   type StreamDelta,
 } from "@/redel/models";
 
 export class ReDelState {
+  meta?: SessionMeta;
   rootMessages: ChatMessage[] = [];
   rootKani?: KaniState;
   kaniMap: Map<string, KaniState> = new Map<string, KaniState>();
@@ -26,6 +28,7 @@ export class ReDelState {
 
   public loadSessionState(data: SessionState) {
     this.kaniMap.clear();
+    this.meta = data;
     // hydrate the app state
     for (const kani of data.state) {
       this.kaniMap.set(kani.id, kani);
