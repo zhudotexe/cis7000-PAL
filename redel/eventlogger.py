@@ -55,7 +55,7 @@ class EventLogger:
     async def write_state(self):
         """Write the full state of the app to the state file, with a basic checksum against the AOF to check validity"""
         self.log_dir.mkdir(exist_ok=True)
-        state = [ai.get_save_state().model_dump(mode="json") for ai in self.app.kanis.values()]
+        state = [self.app.kani.get_save_state().model_dump(mode="json")]
         data = {
             "id": self.session_id,
             "title": self.app.title,

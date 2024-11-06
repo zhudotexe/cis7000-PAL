@@ -44,7 +44,7 @@ class SessionManager:
 
     # ==== state ====
     def get_state(self) -> SessionState:
-        kanis = [ai.get_save_state() for ai in self.redel.kanis.values()]
+        kanis = [self.redel.kani.get_save_state()] if self.redel.kani else []
         return SessionState(
             id=self.redel.session_id,
             title=self.redel.title,

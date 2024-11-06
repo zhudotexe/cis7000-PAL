@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import ChatMessages from "@/components/ChatMessages.vue";
 import type { InteractiveClient } from "@/pal/interactive-openai";
-import { RunState } from "@/redel/models";
 import type { ReDelState } from "@/redel/state";
 import autosize from "autosize";
 import WaveSurfer from "wavesurfer.js";
-import RecordPlugin from 'wavesurfer.js/dist/plugins/record.esm.js';
-import { inject, nextTick, onMounted, onBeforeUnmount, ref, shallowRef } from "vue";
-import { blob } from "d3";
-
+import RecordPlugin from "wavesurfer.js/dist/plugins/record.esm.js";
+import { inject, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
+import { RunState } from "@/redel/models";
 
 const client = inject<InteractiveClient>("client")!;
 const state = inject<ReDelState>("state")!;
@@ -47,20 +45,19 @@ async function sendChatMsg() {
 }
 
 async function startRealtimeListening() {
-  if (push_to_talk)
-    return;
+  if (push_to_talk) return;
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
-          sampleRate: 24000,
-          channelCount: 1,
-          echoCancellation: true,
+        sampleRate: 24000,
+        channelCount: 1,
+        echoCancellation: true,
       },
     });
-    
+
     inputAudioBuffer.value = [];
-    inputAudioContext.value = new AudioContext({sampleRate: 24000});
+    inputAudioContext.value = new AudioContext({ sampleRate: 24000 });
     source.value = inputAudioContext.value.createMediaStreamSource(stream);
     processor.value = inputAudioContext.value.createScriptProcessor(4096, 1, 1);
 
@@ -81,7 +78,7 @@ async function startRealtimeListening() {
 }
 
 async function toggleAudioCapture() {
-  if (paused.value && (source.value && processor.value && inputAudioContext.value)) {
+  if (paused.value && source.value && processor.value && inputAudioContext.value) {
     source.value.connect(processor.value);
     processor.value.connect(inputAudioContext.value.destination);
   } else if (!paused.value) {
@@ -98,26 +95,28 @@ const createWaveSurfer = () => {
   waveSurfer.value = WaveSurfer.create({
     container: waveformRef.value!,
     height: 50,
-    waveColor: 'rgb(200, 0, 200)',
-    progressColor: 'rgb(100, 0, 100)',
+    waveColor: "rgb(200, 0, 200)",
+    progressColor: "rgb(100, 0, 100)",
     barWidth: 2,
     barGap: 1,
     barRadius: 2,
-    cursorColor: 'transparent',
-    backend: 'WebAudio'
+    cursorColor: "transparent",
+    backend: "WebAudio",
   });
 
-  record = waveSurfer.value.registerPlugin(RecordPlugin.create({
-    scrollingWaveform: true,
-    renderRecordedAudio: false
-  }));
+  record = waveSurfer.value.registerPlugin(
+    RecordPlugin.create({
+      scrollingWaveform: true,
+      renderRecordedAudio: false,
+    }),
+  );
 
-  record.on('record-progress', (time: number) => {
+  record.on("record-progress", (time: number) => {
     updateProgress(time);
   });
 
   if (push_to_talk) {
-    record.on('record-data-available', (blob: Blob) => {
+    record.on("record-data-available", (blob: Blob) => {
       recordDataAvailable(blob);
     });
   }
@@ -153,8 +152,8 @@ onMounted(() => {
 
   createWaveSurfer();
   RecordPlugin.getAvailableAudioDevices().then((devices: any[]) => {
-    devices.forEach((device: { deviceId: string; label: any; }) => {
-      const option = document.createElement('option');
+    devices.forEach((device: { deviceId: string; label: any }) => {
+      const option = document.createElement("option");
       option.value = device.deviceId;
       option.text = device.label || device.deviceId;
     });
@@ -170,34 +169,38 @@ onBeforeUnmount(() => {
 const updateProgress = (time: number) => {
   const minutes = Math.floor((time % 3600000) / 60000);
   const seconds = Math.floor((time % 60000) / 1000);
-  progress.value = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  progress.value = `${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
 
 async function recordDataAvailable(blob: Blob) {
   const audioBuffer = await blob.arrayBuffer();
   const audioContext = new AudioContext({ sampleRate: 24000 });
-  audioContext.decodeAudioData(audioBuffer, (decodedData) => {
+  audioContext.decodeAudioData(
+    audioBuffer,
+    (decodedData) => {
       const sampleRate = audioContext.sampleRate;
       const numChannels = decodedData.numberOfChannels;
       const length = decodedData.length * numChannels;
       const audio = new Int16Array(length);
       for (let i = 0; i < decodedData.length; i++) {
-          for (let channel = 0; channel < numChannels; channel++) {
-              const sample = decodedData.getChannelData(channel)[i];
-              audio[i * numChannels + channel] = Math.max(-1, Math.min(1, sample)) * 32767; // Convert to 16-bit PCM
-          }
+        for (let channel = 0; channel < numChannels; channel++) {
+          const sample = decodedData.getChannelData(channel)[i];
+          audio[i * numChannels + channel] = Math.max(-1, Math.min(1, sample)) * 32767; // Convert to 16-bit PCM
+        }
       }
       client.appendAudio(audio);
-  }, (error) => {
-      console.error('Error decoding audio data:', error);
-  });
+    },
+    (error) => {
+      console.error("Error decoding audio data:", error);
+    },
+  );
 }
 
 function convertFloat32ToInt16(buffer: any) {
   let l = buffer.length;
   const buf = new Int16Array(l);
   while (l--) {
-      buf[l] = Math.min(1, buffer[l]) * 0x7FFF;
+    buf[l] = Math.min(1, buffer[l]) * 0x7fff;
   }
   return buf.buffer;
 }
@@ -210,17 +213,17 @@ function convertFloat32ToInt16(buffer: any) {
     <ChatMessages :kani="state.rootKani!" v-if="state.rootKani" ref="chatMessages" />
     <!-- msg bar -->
     <div class="chat-box">
-      <div class="controller-container" :class="{ 'paused': global_pause_count == 0 }" ref="controllerContainer">
+      <div class="controller-container" :class="{ paused: global_pause_count == 0 }" ref="controllerContainer">
         <p class="paused-expand">{{ progress }}</p>
         <div id="waveform" ref="waveformRef" class="waveform-container paused-expand"></div>
         <button @click="toggleMicrophone" class="start-interview has-fixed-size">
           <span class="icon is-small mt-1">
-            <font-awesome-icon :icon="['fas', 'play']" class="fa-xs" v-show="paused"/>
-            <font-awesome-icon :icon="['fas', 'pause']" class="fa-xs" v-show="!paused"/>
+            <font-awesome-icon :icon="['fas', 'play']" class="fa-xs" v-show="paused" />
+            <font-awesome-icon :icon="['fas', 'pause']" class="fa-xs" v-show="!paused" />
           </span>
         </button>
       </div>
-      <!-- <textarea
+      <textarea
         class="textarea has-fixed-size"
         :disabled="state.rootKani?.state !== RunState.stopped"
         autofocus
@@ -228,13 +231,14 @@ function convertFloat32ToInt16(buffer: any) {
         ref="chatInput"
         v-model.trim="chatMsg"
         @keydown.enter.exact.prevent="sendChatMsg"
-      ></textarea> -->
+      ></textarea>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 @import "@/global.scss";
+
 .controller-container {
   background: rgba($beige-light, 0.4);
   padding: 2rem 4rem 2rem 4rem;
@@ -246,6 +250,7 @@ function convertFloat32ToInt16(buffer: any) {
   margin-top: 1rem;
   margin-bottom: 1.5rem;
 }
+
 .paused .paused-expand {
   display: none;
 }
@@ -268,11 +273,12 @@ function convertFloat32ToInt16(buffer: any) {
     background: rgba($purple, 0.8);
   }
 }
+
 svg.fa-play {
   margin-left: 3px;
 }
+
 svg.fa-xs {
   height: 100%;
 }
-
 </style>
