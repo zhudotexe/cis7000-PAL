@@ -50,6 +50,11 @@ class FrontendExtra(TypedDict, total=False):
     """Extra information to send to the frontend. All value types must be JSON serializable."""
 
     patient_info: str
+    patient_image_url: str
+    patient_voice: str
+    patient_name: str
+    patient_age: str
+    patient_gender: str
 
 
 # ===== utils =====
