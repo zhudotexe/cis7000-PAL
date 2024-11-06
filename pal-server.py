@@ -27,7 +27,7 @@ async def startup(server):
                "patient_age": "46",
                "patient_gender": "F",
                "patient_image_url": "/faces/nicki_martin.PNG", 
-               "patient_voice": "female"},  # see redel/utils.py for FrontendExtra
+               "patient_voice": "ug7mg45jVbzgYHpQBrw5"},  # see redel/utils.py for FrontendExtra
     )
     await server.append_new_redel(nicki)
 
@@ -42,7 +42,7 @@ async def startup(server):
                "patient_age": "37",
                "patient_gender": "M",
                "patient_image_url": "/faces/aiden_brown.PNG", 
-               "patient_voice": "male"},  # see redel/utils.py for FrontendExtra
+               "patient_voice": "Alex"},  # see redel/utils.py for FrontendExtra
     )
     await server.append_new_redel(aiden)
 
@@ -57,7 +57,7 @@ async def startup(server):
                "patient_age": "55",
                "patient_gender": "M",
                "patient_image_url": "/faces/aaron_johnson.PNG", 
-               "patient_voice": "male"},  # see redel/utils.py for FrontendExtra
+               "patient_voice": "Edward"},  # see redel/utils.py for FrontendExtra
     )
     await server.append_new_redel(aaron)
 

@@ -126,7 +126,7 @@ class SessionManager:
         # noinspection PyTypeChecker
         audio_stream = await self.server.eleven.generate(
             text=_stream(),
-            voice="Brian",
+            voice=self.redel.extra["patient_voice"],
             model="eleven_turbo_v2_5",
             stream=True,
             output_format="pcm_24000",
