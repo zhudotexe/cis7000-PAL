@@ -61,6 +61,7 @@ class EventLogger:
             "title": self.app.title,
             "last_modified": self.last_modified,
             "n_events": self.event_count.total(),
+            "extra": self.app.extra,
             "state": state,
         }
         with open(self.state_path, "w", encoding="utf-8") as f:

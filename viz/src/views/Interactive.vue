@@ -6,6 +6,7 @@ import { InteractiveClient } from "@/pal/interactive-openai";
 import { Notifications } from "@/redel/notifications";
 import { onMounted, onUnmounted, provide, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
+import Markdown from "@/components/Markdown.vue";
 
 const props = defineProps<{
   sessionId: string;
@@ -35,6 +36,7 @@ onMounted(async () => {
     return;
   }
   client.connect();
+  console.log(client.state.meta?.extra);
 });
 onUnmounted(() => client.close());
 </script>
@@ -45,7 +47,13 @@ onUnmounted(() => client.close());
       <!-- root chat -->
       <div class="column">
         <div class="header-container">
-          <Patient :name="patientData.name" :age="patientData.age" :gender="patientData.gender" ref="patient" />
+          <Patient 
+          :name="client.state.meta?.extra?.patient_name ?? 'No patient name'" 
+          :age="client.state.meta?.extra?.patient_age ?? 'No patient age'" 
+          :gender="client.state.meta?.extra?.patient_gender ?? 'No patient gender'" 
+          :img="client.state.meta?.extra?.patient_image_url ?? '@/assets/faces/nervous.png'"
+          ref="patient" 
+        />
         </div>
         <div class="left-container chat-container">
           <Chat class="mt-auto" />
@@ -54,8 +62,10 @@ onUnmounted(() => client.close());
       <!-- viz -->
       <div class="column">
         <div class="right-container is-flex is-flex-direction-column">
-          <p class="subtitle feedback-title">Feedback and Patient State Dashboard</p>
-          <PatientState :affectValence="30" :affectArousal="32" :affectDominance="20" />
+          <!-- <p class="subtitle feedback-title">Feedback and Patient State Dashboard</p>
+          <PatientState :affectValence="30" :affectArousal="32" :affectDominance="20" /> -->
+          <!-- TODO(allen): make this look nice -->
+          <Markdown class="content" :content="client.state.meta?.extra?.patient_info ?? 'No patient info'" />
         </div>
       </div>
     </div>

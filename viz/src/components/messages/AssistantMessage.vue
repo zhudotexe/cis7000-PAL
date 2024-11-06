@@ -11,8 +11,8 @@ const props = defineProps<{
 <template>
   <div class="media">
     <figure class="media-left">
-      <p class="image is-32x32">
-        <img src="@/assets/twemoji/1f916.svg" alt="Assistant" />
+      <p class="image is-48x48">
+        <img src="@/assets/twemoji/1f912.svg" alt="Assistant" />
       </p>
     </figure>
     <div class="media-content">

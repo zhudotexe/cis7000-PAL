@@ -3,6 +3,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from redel.state import KaniState
+from redel.utils import FrontendExtra
 
 
 class SessionMeta(BaseModel):
@@ -10,6 +11,7 @@ class SessionMeta(BaseModel):
     title: str | None
     last_modified: float
     n_events: int
+    extra: FrontendExtra = {}
 
 
 class SaveMeta(SessionMeta):
