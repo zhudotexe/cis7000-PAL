@@ -1,9 +1,10 @@
 import itertools
 import json
 import uuid
-from typing import Iterable, TYPE_CHECKING, TypeVar, TypedDict
+from typing import Iterable, TYPE_CHECKING, TypeVar
 
 from kani import Kani
+from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from .base_kani import BaseKani
