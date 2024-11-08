@@ -19,6 +19,7 @@ class BaseEvent(BaseModel, abc.ABC):
 # server events
 class Error(BaseEvent):
     type: Literal["error"] = "error"
+    scope: str | None = None
     msg: str
 
 

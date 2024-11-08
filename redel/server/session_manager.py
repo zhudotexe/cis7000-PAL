@@ -7,7 +7,7 @@ from fastapi import WebSocket
 from kani import ChatRole
 
 from redel import ReDel
-from redel.events import AudioDelta, BaseEvent, KaniMessage, RoundComplete, StreamDelta
+from redel.events import AudioDelta, BaseEvent, Error, KaniMessage, RoundComplete, StreamDelta
 from .models import SaveMeta, SessionMeta, SessionState
 
 if TYPE_CHECKING:
@@ -123,14 +123,18 @@ class SessionManager:
                     return
                 yield item
 
-        # noinspection PyTypeChecker
-        audio_stream = await self.server.eleven.generate(
-            text=_stream(),
-            voice=self.redel.extra["patient_voice"],
-            model="eleven_turbo_v2_5",
-            stream=True,
-            output_format="pcm_24000",
-        )
-        async for audio_bytes in audio_stream:
-            audio_string = base64.b64encode(audio_bytes).decode("utf-8")
-            self.redel.dispatch(AudioDelta(id=kani_id, delta=audio_string))
+        try:
+            # noinspection PyTypeChecker
+            audio_stream = await self.server.eleven.generate(
+                text=_stream(),
+                voice=self.redel.extra.get("patient_voice", "Brian"),  # default voice if none specified
+                model="eleven_turbo_v2_5",
+                stream=True,
+                output_format="pcm_24000",
+            )
+            async for audio_bytes in audio_stream:
+                audio_string = base64.b64encode(audio_bytes).decode("utf-8")
+                self.redel.dispatch(AudioDelta(id=kani_id, delta=audio_string))
+        except Exception as e:
+            self.redel.dispatch(Error(msg=str(e), scope="voice"))
+            raise

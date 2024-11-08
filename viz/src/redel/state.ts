@@ -11,7 +11,9 @@ import {
   type SessionMeta,
   type SessionState,
   type StreamDelta,
+  type WSError,
 } from "@/redel/models";
+import {Notifications} from "@/redel/notifications";
 
 export class ReDelState {
   meta?: SessionMeta;
@@ -55,6 +57,9 @@ export class ReDelState {
         break;
       case "stream_delta":
         this.onStreamDelta(data as StreamDelta);
+        break;
+      case "error":
+        this.onError(data as WSError);
         break;
       default:
         console.debug("Unknown event:", data);
@@ -103,6 +108,10 @@ export class ReDelState {
       return;
     }
     this.streamMap.set(data.id, buf + data.delta);
+  }
+
+  onError(data: WSError) {
+    Notifications.error(`Server WS error: ${data.msg}`);
   }
 
   // ==== event handlers - backward ====
