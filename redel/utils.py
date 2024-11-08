@@ -4,7 +4,6 @@ import uuid
 from typing import Iterable, TYPE_CHECKING, TypeVar
 
 from kani import Kani
-from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from .base_kani import BaseKani
@@ -44,18 +43,6 @@ async def generate_conversation_title(ai: "BaseKani"):
         " be specific."
     )
     return title.strip(' "')
-
-
-# ===== frontend =====
-class FrontendExtra(TypedDict, total=False):
-    """Extra information to send to the frontend. All value types must be JSON serializable."""
-
-    patient_info: str
-    patient_image_url: str
-    patient_voice: str
-    patient_name: str
-    patient_age: str
-    patient_gender: str
 
 
 # ===== utils =====

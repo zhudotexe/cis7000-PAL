@@ -2,8 +2,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from redel.pal_sessions import FrontendExtra
 from redel.state import KaniState
-from redel.utils import FrontendExtra
 
 
 class SessionMeta(BaseModel):

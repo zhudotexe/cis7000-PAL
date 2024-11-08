@@ -14,7 +14,8 @@ from kani.engines import BaseEngine
 from . import events
 from .base_kani import BaseKani
 from .eventlogger import EventLogger
-from .utils import AUTOGENERATE_TITLE, AutogenerateTitle, FrontendExtra, generate_conversation_title
+from .pal_sessions import FrontendExtra
+from .utils import AUTOGENERATE_TITLE, AutogenerateTitle, generate_conversation_title
 
 log = logging.getLogger(__name__)
 
