@@ -2,8 +2,10 @@
 
 # PAL
 git+https://github.com/zhudotexe/elevenlabs-python-async-temp.git
-kani-ext-realtime[all] @ git+https://github.com/zhudotexe/kani-ext-realtime.git
 pydub
+
+# useful for debugging
+# kani-ext-realtime[all] @ git+https://github.com/zhudotexe/kani-ext-realtime.git
 
 # dev
 black
