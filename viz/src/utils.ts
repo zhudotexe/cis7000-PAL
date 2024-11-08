@@ -52,3 +52,7 @@ export function greekLetter(name: string): string {
       return name;
   }
 }
+
+export function randomId(): string {
+  return (Math.random() + 1).toString(36).substring(2);
+}

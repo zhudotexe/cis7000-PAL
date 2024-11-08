@@ -21,6 +21,18 @@ async function startNewInteractive() {
 
 async function updateInteractive() {
   interactiveSessions.value = await API.listStatesInteractive();
+  // PAL stuff - if we don't have the interactive states we want, make them
+  if (interactiveSessions.value.length < 3) {
+    await API.initPalStates();
+    interactiveSessions.value = await API.listStatesInteractive();
+  }
+}
+
+async function resetUserId() {
+  const conf = confirm("Are you sure? This will reset all patient states!");
+  if (!conf) return;
+  API.resetUid();
+  router.push({ name: "home" });
 }
 
 // hooks
@@ -73,6 +85,19 @@ router.afterEach(async () => {
             <RouterLink :to="{ name: 'interactive', params: { sessionId: session.id } }" active-class="is-active">
               <SessionMetaRow :data="session" hide-icon-hints />
             </RouterLink>
+          </li>
+          <li v-if="!interactiveSessions.length">
+            <a> None yet! </a>
+          </li>
+        </ul>
+
+        <p class="menu-label">User Info</p>
+        <ul class="menu-list">
+          <li>
+            <a> Your user ID: {{ API.uid }} </a>
+          </li>
+          <li>
+            <a @click="resetUserId"> Reset user ID </a>
           </li>
         </ul>
       </div>

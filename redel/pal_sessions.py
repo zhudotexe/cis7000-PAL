@@ -4,7 +4,8 @@ from pathlib import Path
 
 from typing_extensions import TypedDict
 
-from redel import DEFAULT_LOG_DIR, ReDel
+from redel.app import ReDel
+from redel.config import DEFAULT_LOG_DIR
 
 PAL_PROMPTS = Path(__file__).parents[1] / "pal_prompts"
 

@@ -243,9 +243,11 @@ class VizServer:
             """
             Create the three default PAL states for the given user ID and return them.
             """
+            if sum(1 for manager in self.interactive_sessions.values() if manager.uid == uid) >= 3:
+                return []
             states = []
             for pal_redel in await pal_sessions.get_default_sessions(self.engine, uid=uid):
-                manager = await self.append_new_redel(pal_redel)
+                manager = await self.append_new_redel(pal_redel, uid=uid)
                 states.append(manager.get_state())
             return states
 
