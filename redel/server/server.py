@@ -2,6 +2,8 @@ import asyncio
 import base64
 import io
 import logging
+import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Awaitable, Callable, Collection
@@ -21,7 +23,7 @@ except ImportError:
         ' "redel[web]"`.'
     ) from None
 
-from redel import ReDel
+from redel import ReDel, pal_sessions
 from redel.config import DEFAULT_LOG_DIR
 from redel.events import Error, SendAudio, SendMessage
 from redel.utils import read_jsonl
@@ -90,13 +92,13 @@ class VizServer:
         # most of the time is spent in IO with the filesystem so we can thread this
         await asyncio.get_event_loop().run_in_executor(None, _index)
 
-    async def create_new_redel(self) -> ReDel:
+    async def create_new_redel(self, **kwargs) -> ReDel:
         """Return a new ReDel instance given the server config."""
-        return ReDel(engine=self.engine, system_prompt=self.system_prompt, kani_kwargs=self.kani_kwargs)
+        return ReDel(engine=self.engine, system_prompt=self.system_prompt, kani_kwargs=self.kani_kwargs, **kwargs)
 
-    async def append_new_redel(self, redel: ReDel):
+    async def append_new_redel(self, redel: ReDel, uid: str = None):
         """Start tracking the given redel in this server."""
-        manager = SessionManager(self, redel)
+        manager = SessionManager(self, redel, uid=uid)
         self.interactive_sessions[redel.session_id] = manager
         self.saves[redel.session_id] = manager.get_save_meta()
         await manager.start()
@@ -166,23 +168,29 @@ class VizServer:
                 log.warning(f"Could not fully delete save: {e}")
             return save
 
-        # todo: load save
-
         # ---- interactive ----
         @self.fastapi.get("/api/states")
-        async def list_states_interactive() -> list[SessionMeta]:
+        async def list_states_interactive(uid: str = None) -> list[SessionMeta]:
             """List the interactive sessions currently loaded by the server."""
+            if uid:
+                return [
+                    manager.get_session_meta() for manager in self.interactive_sessions.values() if manager.uid == uid
+                ]
             return [manager.get_session_meta() for manager in self.interactive_sessions.values()]
 
         @self.fastapi.post("/api/states")
-        async def create_state_interactive(start_content: Annotated[str, Body(embed=True)] = None) -> SessionState:
+        async def create_state_interactive(
+            start_content: Annotated[str, Body(embed=True)] = None, uid: str = None
+        ) -> SessionState:
             """Create a fresh new interactive session, optionally with a first user message.
             This will also create a new save.
             """
+            session_id = f"{int(time.time())}-{uuid.uuid4()}"
+            log_dir = (DEFAULT_LOG_DIR / uid / session_id) if uid else (DEFAULT_LOG_DIR / session_id)
             # create a new redel instance given the settings
-            redel = await self.create_new_redel()
+            redel = await self.create_new_redel(log_dir=log_dir, session_id=session_id)
             # assign it to a sessionmanager and start
-            manager = await self.append_new_redel(redel)
+            manager = await self.append_new_redel(redel, uid=uid)
             if start_content:
                 await manager.msg_queue.put(SendMessage(content=start_content))
             return manager.get_state()
@@ -228,6 +236,20 @@ class VizServer:
                 except Exception as e:
                     log.exception(f"Exception on ws event in session {session_id}:")
                     await websocket.send_text(Error(msg=str(e)).model_dump_json())
+
+        # ---- PAL session helper ----
+        @self.fastapi.post("/api/init-pal-states")
+        async def init_pal_states(uid: str) -> list[SessionState]:
+            """
+            Create the three default PAL states for the given user ID and return them.
+            """
+            if sum(1 for manager in self.interactive_sessions.values() if manager.uid == uid) >= 3:
+                return []
+            states = []
+            for pal_redel in await pal_sessions.get_default_sessions(self.engine, uid=uid):
+                manager = await self.append_new_redel(pal_redel, uid=uid)
+                states.append(manager.get_state())
+            return states
 
         # viz static files
         if not VIZ_DIST.exists():

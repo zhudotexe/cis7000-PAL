@@ -19,13 +19,14 @@ _break_sentinel = object()
 class SessionManager:
     """Responsible for a single session and all connections to it."""
 
-    def __init__(self, server: "VizServer", redel: ReDel):
+    def __init__(self, server: "VizServer", redel: ReDel, uid: str):
         self.server = server
         self.redel = redel
         self.redel.add_listener(self.on_event)
         self.task = None
         self.msg_queue = asyncio.Queue()
         self.active_connections: list[WebSocket] = []
+        self.uid = uid
 
         # tts
         self._tts_queues = defaultdict(asyncio.Queue)

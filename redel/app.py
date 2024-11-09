@@ -5,7 +5,7 @@ import time
 import uuid
 from collections.abc import AsyncIterable
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, TYPE_CHECKING
 
 import kani.exceptions
 from kani import ChatRole, chat_in_terminal_async
@@ -14,7 +14,10 @@ from kani.engines import BaseEngine
 from . import events
 from .base_kani import BaseKani
 from .eventlogger import EventLogger
-from .utils import AUTOGENERATE_TITLE, AutogenerateTitle, FrontendExtra, generate_conversation_title
+from .utils import AUTOGENERATE_TITLE, AutogenerateTitle, generate_conversation_title
+
+if TYPE_CHECKING:
+    from .pal_sessions import FrontendExtra
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +62,7 @@ class ReDel:
         clear_existing_log: bool = False,
         session_id: str = None,
         # frontend extras
-        extra: FrontendExtra = None,
+        extra: "FrontendExtra" = None,
     ):
         """
         :param engine: The engine to use for the kani. (default: gpt-4o)
