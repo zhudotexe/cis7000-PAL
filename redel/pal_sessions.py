@@ -64,7 +64,7 @@ async def get_default_sessions(engine, uid: str) -> list[ReDel]:
             "patient_age": "37",
             "patient_gender": "M",
             "patient_image_url": "/faces/aiden_brown.png",
-            "patient_voice": "Alex",
+            "patient_voice": "pwfUObaNG29PitX1ZmwL",
         },
     )
     redels.append(aiden)
@@ -85,7 +85,7 @@ async def get_default_sessions(engine, uid: str) -> list[ReDel]:
             "patient_age": "55",
             "patient_gender": "M",
             "patient_image_url": "/faces/aaron_johnson.png",
-            "patient_voice": "Edward",
+            "patient_voice": "mBxe7tYxRAMLpIP3fPEp",
         },
     )
     redels.append(aaron)
