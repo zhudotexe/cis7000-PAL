@@ -1,10 +1,9 @@
 import { API, WS_BASE } from "@/redel/api";
-import type { BaseEvent, ChatMessage, RootMessage, AudioDelta, SendMessage, SendAudio } from "@/pal/models";
+import type { BaseEvent, ChatMessage, KaniMessage, RootMessage, StreamDelta, AudioDelta, SendMessage, SendAudio, EndSession } from "@/pal/models";
 import type { RealtimeEvent } from "@/pal/models";
 import { AudioQueueManager } from "@/pal/audio";
 import { ChatRole } from "@/pal/models";
 import { ReDelState } from "@/redel/state";
-import { RealtimeClient } from '@openai/realtime-api-beta';
 
 /**
  * API client to handle interactive session with the backend.
@@ -18,14 +17,12 @@ export class InteractiveClient {
   isWSConnecting = false;
   isWSDisconnected = false;
   // openai-browser
-  client: RealtimeClient;
   audioQueueManager: AudioQueueManager;
-  currentClientTranscript: string = '';
-  currentServerTranscript: string = '';
 
   // events
   events = new EventTarget();
   isReady: boolean = false;
+  isEnded: boolean = false;
 
   public constructor(sessionId: string, startState?: ReDelState) {
     this.sessionId = sessionId;
@@ -35,17 +32,6 @@ export class InteractiveClient {
       this.state = new ReDelState();
     }
     // openai-browser
-    const apiKey = "API_KEY_HERE";
-    this.client = new RealtimeClient({
-      apiKey: apiKey,
-      dangerouslyAllowAPIKeyInBrowser: true,
-    });
-    this.client.updateSession({
-      turn_detection: { type: 'server_vad' },
-      input_audio_transcription: { model: 'whisper-1' },
-      voice: 'alloy',
-      instructions: 'I want you to tutor me, a medical student, on how to have a good conversation with a patient and then role play with me. You are the patient, Sarah, and I am the doctor. You should speak like a sick patient. Your voice should sound pretty emotional at times. You should also speak slightly faster than normal.',
-    });
     this.audioQueueManager = new AudioQueueManager();
   }
 
@@ -58,24 +44,10 @@ export class InteractiveClient {
     this.ws.addEventListener("close", (event) => this.onWSClose(event));
     this.ws.addEventListener("error", (event) => console.warn("WebSocket error: ", event));
     this.ws.addEventListener("message", (event) => this.onRawMessage(event.data));
-    // openai-browser
-    try {
-      this.client.connect().then(() => {
-        // Set up event handlers
-        this.client.on('realtime.event', (event: any) => this.handleRealtimeEvent(event));
-        // Mark as ready
-        this.isReady = true;
-        this.events.dispatchEvent(new Event("_ready"));
-      });
-    } catch (error) {
-      console.error("Failed to connect:", error);
-    }
   }
 
   public close() {
     this.ws?.close(1000);
-    // openai-browser
-    this.client.disconnect();
   }
 
   // ==== API ====
@@ -116,6 +88,13 @@ export class InteractiveClient {
     // this.audioQueueManager.addAudioToQueue(this.base64ToInt16Array(payload.audio));
   }
 
+  public endSession(transcript: string) {
+    this.isEnded = true;
+
+    const payload: EndSession = { type: "end_session", transcript: transcript };
+    this.ws?.send(JSON.stringify(payload));
+  }
+
   // ==== utils ====
   public async waitForReady() {
     if (this.isReady) return true;
@@ -147,8 +126,16 @@ export class InteractiveClient {
     }
     console.log(message.type);
     if (message.type === "audio_delta") {
+      if (this.isEnded)
+        return
       this.audioQueueManager.addAudioToQueue(this.base64ToInt16Array((message as AudioDelta).delta));
     } else {
+      if (this.isEnded && ((message.type == "root_message" && (message as RootMessage).msg.role !== ChatRole.assistant) || (message.type == "stream_delta" && (message as StreamDelta).role !== ChatRole.assistant) || (message.type == "kani_message" && (message as RootMessage).msg.role !== ChatRole.assistant))) {
+        return
+      }
+      if (this.isEnded && message.type == "kani_message") {
+        (message as KaniMessage).msg.role = ChatRole.system;
+      }
       this.state.handleEvent(message);
       this.events.dispatchEvent(new CustomEvent(message.type, { detail: message }));
     }
@@ -183,51 +170,6 @@ export class InteractiveClient {
     setTimeout(() => this.attemptReconnect(attempt + 1, maxAttempts), attempt * 1000 + Math.random() * 1000);
   }
 
-  // ==== openai-browser event handlers ====
-  private handleRealtimeEvent({ source, event } : RealtimeEvent) {
-    if (source !== 'server') return; 
-
-    switch (event.type) {
-      case 'response.audio.delta':
-        const audioData = this.base64ToInt16Array(event.delta);
-        this.audioQueueManager.addAudioToQueue(audioData);
-        // this.handleAudioDelta(event);
-        break;
-      case 'conversation.item.input_audio_transcription.completed':
-        const clientMessage: ChatMessage = {
-          role: ChatRole.user,
-          content: event.transcript,
-          name: "Doctor",
-          tool_call_id: null,
-          tool_calls: []
-        };
-        this.state.rootKani?.chat_history.push(clientMessage);
-        console.log('Client:', event.transcript);
-        break
-      case 'response.audio_transcript.delta':
-        this.currentServerTranscript += event.delta;
-        break;
-      case 'response.audio_transcript.done':
-        const serverMessage: ChatMessage = {
-          role: ChatRole.system,
-          content: this.currentServerTranscript,
-          name: "Patient",
-          tool_call_id: null,
-          tool_calls: []
-        };
-        setTimeout(() => {
-          this.state.rootKani?.chat_history.push(serverMessage);
-        }, 1000);
-        console.log('Server:', this.currentServerTranscript);
-
-        this.currentServerTranscript = "";
-        break;
-      default:
-        // Ignore other events
-        break;
-    }
-  }
-  
   private base64ToInt16Array(base64: string): Int16Array {
     const binaryString = atob(base64);
     const len = binaryString.length;

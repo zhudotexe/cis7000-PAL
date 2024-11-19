@@ -42,6 +42,21 @@ function toggleSpeech() {
   isSpeechEnabled.value = !isSpeechEnabled.value;
   chat.value?.toggleSpeech();
 }
+function endInteraction() {
+  if (chat.value?.isEnded) return;
+
+  var transcript = "";
+  for (const msg of client.state.rootMessages) {
+    if (msg.role === "user") {
+      transcript += "Doctor: " + msg.content + "\n";
+    } else if (msg.role === "assistant") {
+      transcript += "Patient: " + msg.content + "\n";
+    }
+  }
+
+  chat.value?.end();
+  client.endSession(transcript);
+}
 </script>
 
 <template>
@@ -75,6 +90,10 @@ function toggleSpeech() {
               <span class="slider round"></span>
             </label>
            </div>
+           <br>
+           <div>
+            <button @click="endInteraction">Finish Session</button>
+           </div>
            <hr>
           <Markdown class="content" :content="client.state.meta?.extra?.patient_info ?? 'No patient info'" />
         </div>
@@ -87,6 +106,21 @@ function toggleSpeech() {
 @import "@/global.scss";
 
 $header-height: 8rem;
+
+button {
+  background-color: $purple;
+  border: none;
+  width: 100%;
+  border-radius: 0.5rem;
+
+  color: white;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: darken($purple, 10%);
+  }
+}
 
 .main {
   height: 100vh;
@@ -188,11 +222,11 @@ $header-height: 8rem;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: $purple;
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
+  box-shadow: 0 0 1px $purple;
 }
 
 input:checked + .slider:before {

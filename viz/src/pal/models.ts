@@ -105,6 +105,11 @@ export enum ChatRole {
     id: string;
     delta: string;
   }
+
+  export interface EndSession extends BaseEvent {
+    type: "end_session";
+    transcript: string;
+  }
   
   // ---- client events ----
   export interface SendMessage extends BaseEvent {

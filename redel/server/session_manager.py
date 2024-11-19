@@ -7,7 +7,7 @@ from fastapi import WebSocket
 from kani import ChatRole
 
 from redel import ReDel
-from redel.events import AudioDelta, BaseEvent, Error, KaniMessage, RoundComplete, StreamDelta
+from redel.events import AudioDelta, BaseEvent, Error, KaniMessage, RoundComplete, StreamDelta, EndSession
 from .models import SaveMeta, SessionMeta, SessionState
 
 if TYPE_CHECKING:
@@ -31,6 +31,7 @@ class SessionManager:
         # tts
         self._tts_queues = defaultdict(asyncio.Queue)
         self._tts_tasks = {}
+        self.disable_tts = False
 
     # ==== lifecycle ====
     async def start(self):
@@ -98,6 +99,9 @@ class SessionManager:
     # ==== PAL ====
     async def register_tts_listener(self):
         async def on_event(event):
+            if self.disable_tts:
+                return
+            
             if isinstance(event, StreamDelta):
                 # for each text stream token, TTS task it if it does not exist
                 if event.id not in self._tts_tasks:

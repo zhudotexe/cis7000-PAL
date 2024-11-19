@@ -10,6 +10,7 @@ from typing import Annotated, Awaitable, Callable, Collection
 
 from elevenlabs.client import AsyncElevenLabs
 from kani.engines import BaseEngine
+from kani import ChatMessage, ChatRole
 from openai import AsyncOpenAI
 from pydub import AudioSegment
 
@@ -225,6 +226,10 @@ class VizServer:
                         audio_bytes = base64.b64decode(audio_event.audio)
                         transcript = await self.whisper_transcribe(audio_bytes)
                         event = SendMessage(content=transcript)
+                    elif data["type"] == "end_session":
+                        manager.disable_tts = True
+                        eval_message = self.generate_evaluation(data["transcript"])
+                        event = SendMessage(content=eval_message)
                     # otherwise push the message onto the queue
                     else:
                         event = SendMessage.model_validate(data)
@@ -261,6 +266,11 @@ class VizServer:
         self.fastapi.mount("/", StaticFiles(directory=VIZ_DIST, html=True), name="viz")
 
     # ===== PAL utils =====
+    def generate_evaluation(self, transcript: str):
+        message = f"Analyze a transcript from a doctor-patient encounter and provide actionable communication improvement advice for the doctor.\n\nConsider effective communication tools such as NURSE statements, avoiding jargon, and preventing common learner hiccups. Your advice should be clear, specific, and include practical steps for improvement. Address emotional cues and provide suggestions to optimize patient understanding and support. You should speak directly to the doctor and use second person pronouns. Do not enumerate your response.\n\n# Steps\n\n- **Analyze Transcript:**\n  - Identify moments where the doctor's communication can be improved.\n  - Assess instances where the doctor faced emotionally driven reactions from the patient/family, and determine whether appropriate NURSE statements were used.\n\n- **Identify Gaps and Give Actionable Feedback:**\n  - Focus on common learner hiccups like skipping initial steps, unclear headlines, or neglecting to offer NURSE statements.\n  - Offer suggestions that go beyond simple feedback, outlining specific ways the doctor can alter their phrasing or behavior.\n\n- **Provide Emotional Support Guidance:**\n  - When providing alternate suggestions, use examples that appropriately name emotions, offer understanding or respect, explore emotions, or provide emotional support.\n\n- **Link Feedback to Techniques:**\n  - Clearly link feedback to provided communication methods such as NURSE statements, offering enhanced implementation or corrections.\n\n# Output Format\n\nProvide feedback in a list format where:\n- Each item contains **a specific scenario/moment** that could be improved.\n- Each item includes **detailed suggestions** for what the doctor could say differently, and why this change is beneficial.\n- Use **NURSE-related language** where applicable and avoid broad, unspecific comments.\n\nExample Feedback Segment:\n1. **Scenario**: Doctor introduces prognosis without assessing the emotion.\n   - **Current Approach**: \"The prognosis is not very good.\"\n   - **Improvement Suggestion**: Add an understanding statement first. For instance, \"I know this must be really hard to hear.\" This would help in validating the patient's feelings, allowing them space to process the news and feel understood.\n\n2. **Scenario**: Doctor uses medical jargon.\n   - **Current Approach**: \"There's evidence of multisystem organ failure.\"\n   - **Improvement Suggestion**: Replace jargon with simpler language. Try, \"We're noticing that several of their important organs are starting to not work as they should.\" This ensures that the patient and their family can follow and understand the diagnosis clearly.\n\n3. **Scenario**: Doctor doesn't explore the family member's concerns after giving troubling news.\n   - **Current Approach**: \"This must be really hard. But let's talk about next steps.\"\n   - **Improvement Suggestion**: Instead, pause after acknowledging their concerns with an explore statement: \"Can you tell me more about what's on your mind right now?\" This gives an opportunity for the family member to voice their concerns and ensures they feel heard.\n\n# Notes\n\n- **Avoid Fake NURSE Statements**: Ensure the given NURSE statement is sincere, and allow adequate space for the patient to react.\n- **Avoid Jargon or Vague Headline Information**: Deliver information directly with clear, patient-friendly language.\n- **Adjust Emotional Attunement**: Pay attention to phrases like \"I understand,\" which can come across as overconfident about a family's experience. Use phrases like \"I can't imagine what you're feeling\" to show empathy without overstepping.\n# Transcript:\n{transcript}"
+
+        return message
+
     async def whisper_transcribe(self, audio_bytes: bytes) -> str:
         # We assume the audio bytes are PCM16LE single channel 24kHz
         audio = AudioSegment(data=audio_bytes, sample_width=2, channels=1, frame_rate=24000)

@@ -101,6 +101,12 @@ class RoundComplete(BaseEvent):
     session_id: str
 
 
+class EndSession(BaseEvent):
+    """The session has ended and the server should push an evaluation message."""
+
+    type: Literal["end_session"] = "end_session"
+    trancript: str
+
 # user events
 class SendMessage(BaseEvent):
     """Send a user message to the root kani and request a completion."""

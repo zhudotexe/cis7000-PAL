@@ -21,6 +21,7 @@ const paused = ref(true);
 const global_pause_count = ref(0);
 const progress = ref("00:00");
 const isSpeechEnabled = ref(true);
+const isEnded = ref(false);
 let record: any = null;
 
 // audio capture toggle
@@ -33,6 +34,9 @@ const processor = shallowRef<ScriptProcessorNode | null>(null);
 
 function toggleSpeech() {
   isSpeechEnabled.value = !isSpeechEnabled.value;
+}
+function end() {
+  isEnded.value = true;
 }
 
 async function sendChatMsg() {
@@ -210,7 +214,7 @@ function convertFloat32ToInt16(buffer: any) {
   return buf.buffer;
 }
 
-defineExpose({ toggleSpeech });
+defineExpose({ toggleSpeech, end, isEnded });
 </script>
 
 <template>
@@ -219,7 +223,7 @@ defineExpose({ toggleSpeech });
     <!-- chat history -->
     <ChatMessages :kani="state.rootKani!" v-if="state.rootKani" ref="chatMessages" />
     <!-- msg bar -->
-    <div class="chat-box">
+    <div class="chat-box" v-show="!isEnded">
       <div class="controller-container" :class="{ paused: global_pause_count == 0 }" ref="controllerContainer">
         <p class="paused-expand">{{ progress }}</p>
         <div id="waveform" ref="waveformRef" class="waveform-container paused-expand"></div>
