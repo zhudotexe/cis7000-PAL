@@ -44,7 +44,7 @@ defineExpose({ scrollChatToBottom, setSpeechEnabled });
     </div>
     <!-- stream buffer -->
     <div class="chat-message" v-if="streamBuffer">
-      <AssistantStream :content="streamBuffer" />
+      <AssistantStream :content="streamBuffer" v-show="!isSpeechEnabled"/>
     </div>
     <!-- loading/nothing -->
     <p v-if="kani.chat_history.length === 0" class="chat-message">No messages yet!</p>
