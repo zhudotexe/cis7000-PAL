@@ -222,6 +222,7 @@ class VizServer:
 
                     # if it's an audio message, transcribe it
                     if data["type"] == "send_audio":
+                        manager.disable_tts = False
                         audio_event = SendAudio.model_validate(data)
                         audio_bytes = base64.b64decode(audio_event.audio)
                         transcript = await self.whisper_transcribe(audio_bytes)
@@ -232,6 +233,7 @@ class VizServer:
                         event = SendMessage(content=eval_message)
                     # otherwise push the message onto the queue
                     else:
+                        manager.disable_tts = True
                         event = SendMessage.model_validate(data)
 
                     await manager.msg_queue.put(event)

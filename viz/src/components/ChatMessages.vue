@@ -15,6 +15,7 @@ const props = defineProps<{
 
 const state = inject<ReDelState>("state")!;
 const chatHistory = ref<HTMLElement | null>(null);
+const isSpeechEnabled = ref(true);
 
 function scrollChatToBottom() {
   if (chatHistory.value === null) return;
@@ -25,15 +26,19 @@ const streamBuffer = computed(() => {
   return state.streamMap.get(props.kani.id);
 });
 
-defineExpose({ scrollChatToBottom });
+const setSpeechEnabled = (enabled: boolean) => {
+  isSpeechEnabled.value = enabled;
+};
+
+defineExpose({ scrollChatToBottom, setSpeechEnabled });
 </script>
 
 <template>
   <div class="messages" ref="chatHistory">
     <!-- complete messages -->
     <div v-for="message in kani.chat_history" class="chat-message">
-      <UserMessage v-if="message.role === ChatRole.user" :message="message" class="user" />
-      <AssistantMessage v-else-if="message.role === ChatRole.assistant" :message="message" />
+      <UserMessage v-if="message.role === ChatRole.user" :message="message" class="user" v-show="!isSpeechEnabled"/>
+      <AssistantMessage v-else-if="message.role === ChatRole.assistant" :message="message" v-show="!isSpeechEnabled"/>
       <FunctionMessage v-else-if="message.role === ChatRole.function" :message="message" />
       <SystemMessage v-else-if="message.role === ChatRole.system" :message="message" />
     </div>

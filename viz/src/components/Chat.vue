@@ -34,6 +34,7 @@ const processor = shallowRef<ScriptProcessorNode | null>(null);
 
 function toggleSpeech() {
   isSpeechEnabled.value = !isSpeechEnabled.value;
+  chatMessages.value?.setSpeechEnabled(isSpeechEnabled.value);
 }
 function end() {
   isEnded.value = true;
@@ -221,7 +222,7 @@ defineExpose({ toggleSpeech, end, isEnded });
   <div class="is-flex is-flex-direction-column h-100">
     <div class="is-flex-grow-1"></div>
     <!-- chat history -->
-    <ChatMessages :kani="state.rootKani!" v-if="state.rootKani" ref="chatMessages" />
+    <ChatMessages :kani="state.rootKani!" v-if="state.rootKani" ref="chatMessages"/>
     <!-- msg bar -->
     <div class="chat-box" v-show="!isEnded">
       <div class="controller-container" :class="{ paused: global_pause_count == 0 }" ref="controllerContainer">
