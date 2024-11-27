@@ -90,4 +90,47 @@ async def get_default_sessions(engine, uid: str) -> list[ReDel]:
     )
     redels.append(aaron)
 
+
+    session_id = f"{now}-aiden_VOICE-{uuid.uuid4()}"
+    log_dir = DEFAULT_LOG_DIR / uid / session_id
+    aiden_system = (PAL_PROMPTS / "aiden_voice_system.txt").read_text().strip()
+    aiden_info = (PAL_PROMPTS / "aiden_info.md").read_text().strip()
+    aiden_voice_mode = ReDel(
+        engine=engine,
+        session_id=session_id,
+        log_dir=log_dir,
+        system_prompt=aiden_system,
+        title="Aiden Brown, 37 M - Voice Mode",
+        extra={
+            "patient_info": aiden_info,
+            "patient_name": "Aiden Brown",
+            "patient_age": "37",
+            "patient_gender": "M",
+            "patient_image_url": "/faces/aiden_brown.png",
+            "patient_voice": "pwfUObaNG29PitX1ZmwL",
+        },
+    )
+    redels.append(aiden_voice_mode)
+
+    session_id = f"{now}-nicki_VOICE-{uuid.uuid4()}"
+    log_dir = DEFAULT_LOG_DIR / uid / session_id
+    nicki_system = (PAL_PROMPTS / "nicki_voice_system.txt").read_text().strip()
+    nicki_info = (PAL_PROMPTS / "nicki_info.md").read_text().strip()
+    nicki_voice_mode = ReDel(
+        engine=engine,
+        session_id=session_id,
+        log_dir=log_dir,
+        system_prompt=nicki_system,
+        title="Nicki Martin, 46 F - Voice Mode",
+        extra={
+            "patient_info": nicki_info,
+            "patient_name": "Nicki Martin",
+            "patient_age": "46",
+            "patient_gender": "F",
+            "patient_image_url": "/faces/nicki_martin.png",
+            "patient_voice": "ug7mg45jVbzgYHpQBrw5",
+        },
+    )
+    redels.append(nicki_voice_mode)
+
     return redels
