@@ -5,8 +5,11 @@ Example server for the ReDel web interface.
 import logging
 
 from kani.engines.openai import OpenAIEngine
-
+from dotenv import load_dotenv
 from redel.server import VizServer
+import os
+
+load_dotenv()
 
 engine = OpenAIEngine(model="gpt-4o", temperature=0.8, top_p=0.95)
 

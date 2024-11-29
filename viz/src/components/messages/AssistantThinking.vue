@@ -1,10 +1,15 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const props = defineProps<{
+  img?: string; // Dynamic image passed from parent
+}>();
+</script>
 
 <template>
   <div class="media">
     <figure class="media-left">
       <p class="image is-32x32">
-        <img src="@/assets/twemoji/1f916.svg" alt="Assistant" />
+        <!-- Use dynamic image or fallback -->
+        <img :src="img" alt="Assistant Thinking" />
       </p>
     </figure>
     <div class="media-content">
@@ -16,3 +21,4 @@
 </template>
 
 <style scoped></style>
+
