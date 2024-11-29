@@ -15,42 +15,59 @@ const props = defineProps<{
 
 const state = inject<ReDelState>("state")!;
 const chatHistory = ref<HTMLElement | null>(null);
-const isSpeechEnabled = ref(true);
+
+// Computed property for consistent dynamic image retrieval
+const patientImageUrl = computed(() => {
+  return state.meta?.extra?.patient_image_url || '/faces/nervous.png'; // Fallback image
+});
 
 function scrollChatToBottom() {
   if (chatHistory.value === null) return;
   chatHistory.value.scrollTop = chatHistory.value.scrollHeight;
 }
 
-const streamBuffer = computed(() => {
-  return state.streamMap.get(props.kani.id);
-});
-
-const setSpeechEnabled = (enabled: boolean) => {
-  isSpeechEnabled.value = enabled;
-};
-
-defineExpose({ scrollChatToBottom, setSpeechEnabled });
+defineExpose({ scrollChatToBottom });
 </script>
 
 <template>
   <div class="messages" ref="chatHistory">
-    <!-- complete messages -->
+    <!-- Complete messages -->
     <div v-for="message in kani.chat_history" class="chat-message">
-      <UserMessage v-if="message.role === ChatRole.user" :message="message" class="user" v-show="!isSpeechEnabled"/>
-      <AssistantMessage v-else-if="message.role === ChatRole.assistant" :message="message" v-show="!isSpeechEnabled"/>
-      <FunctionMessage v-else-if="message.role === ChatRole.function" :message="message" />
-      <SystemMessage v-else-if="message.role === ChatRole.system" :message="message" />
+      <UserMessage 
+        v-if="message.role === ChatRole.user" 
+        :message="message" 
+        class="user" 
+      />
+      <AssistantMessage 
+        v-else-if="message.role === ChatRole.assistant" 
+        :message="message" 
+        :img="patientImageUrl" 
+      />
+      <FunctionMessage 
+        v-else-if="message.role === ChatRole.function" 
+        :message="message" 
+      />
+      <SystemMessage 
+        v-else-if="message.role === ChatRole.system" 
+        :message="message" 
+      />
     </div>
-    <!-- stream buffer -->
+
+    <!-- Stream buffer -->
     <div class="chat-message" v-if="streamBuffer">
-      <AssistantStream :content="streamBuffer" v-show="!isSpeechEnabled"/>
+      <AssistantStream 
+        :content="streamBuffer"
+        :img="patientImageUrl"
+      />
     </div>
-    <!-- loading/nothing -->
-    <p v-if="kani.chat_history.length === 0" class="chat-message">No messages yet!</p>
+
+    <!-- Assistant thinking -->
     <div class="chat-message" v-if="kani.state !== RunState.stopped && !streamBuffer">
-      <AssistantThinking />
+      <AssistantThinking 
+        :img="patientImageUrl"
+      />
     </div>
+
     <div class="scroll-anchor"></div>
   </div>
 </template>
