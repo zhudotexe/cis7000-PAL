@@ -41,4 +41,3 @@
 
 ## Unaddressed Features/Bugs
 - There were no significant unaddressed features or bugs as all tasks were completed. However, further user feedback may reveal opportunities for improvement in popup timing or emoji customization.
-
