@@ -13,13 +13,10 @@ const isOpen = ref<boolean>(true);
 const loadSaveModal = ref<InstanceType<typeof LoadSaveModal> | null>(null);
 const interactiveSessions = ref<SessionMeta[]>([]);
 
-
-const showInstructions = ref(false); 
-const selectedSessionId = ref<string | null>(null); 
-
 async function startNewInteractive() {
-  // soojin -- changed to disable new session
-  console.warn("Starting new sessions has been disabled.");
+  // request new interactive session, link to interactive
+  const newState = await API.createStateInteractive();
+  router.push({ name: "interactive", params: { sessionId: newState.id } });
 }
 
 async function updateInteractive() {
@@ -38,28 +35,6 @@ async function resetUserId() {
   router.push({ name: "home" });
 }
 
-
-function handleSessionClick(sessionId: string) { 
-  selectedSessionId.value = sessionId; 
-  // Check if the popup has already been shown in this session
-  if (!sessionStorage.getItem("popupShown")) { // NEW
-    showInstructions.value = true;             // NEW
-    sessionStorage.setItem("popupShown", "true"); // NEW
-  } else {                                     // NEW
-    proceedToSession();                        // NEW
-  }
-}
-
-// when clicked start start session, otehrwise stay in current state
-function proceedToSession() { 
-  if (selectedSessionId.value) { 
-    router.push({ name: "interactive", params: { sessionId: selectedSessionId.value } }); 
-    showInstructions.value = false;
-    selectedSessionId.value = null; 
-  }
-}
-
-
 // hooks
 onMounted(async () => {
   await updateInteractive();
@@ -77,7 +52,6 @@ router.afterEach(async () => {
         <RouterLink class="title" to="/">PAL</RouterLink>
         <p class="menu-label">Controls</p>
         <ul class="menu-list">
-          <!--  soojin - Disable new session
           <li>
             <a @click="startNewInteractive">
               <span class="icon-text">
@@ -88,7 +62,6 @@ router.afterEach(async () => {
               </span>
             </a>
           </li>
-        -->
           <li>
             <a @click="loadSaveModal!.open()">
               <span class="icon-text">
@@ -109,9 +82,9 @@ router.afterEach(async () => {
               (a: SessionMeta, b: SessionMeta) => b.last_modified - a.last_modified,
             )"
           >
-              <a @click="handleSessionClick(session.id)">
+            <RouterLink :to="{ name: 'interactive', params: { sessionId: session.id } }" active-class="is-active">
               <SessionMetaRow :data="session" hide-icon-hints />
-              </a>
+            </RouterLink>
           </li>
           <li v-if="!interactiveSessions.length">
             <a> None yet! </a>
@@ -136,24 +109,6 @@ router.afterEach(async () => {
   </aside>
 
   <LoadSaveModal ref="loadSaveModal" />
-  <div v-if="showInstructions" class="modal is-active"> 
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">How to Start?</p>
-        <button class="delete" aria-label="close" @click="showInstructions = false"></button> <!-- Close Modal -->
-      </header>
-      <section class="modal-card-body">
-        <p><strong>Patient Context:</strong> Read the patient profile for context.</p>
-        <p><strong>Interaction Modes:</strong> Toggle between Speech and Text Input.</p>
-        <p><strong>Feedback:</strong> Use the "Feedback" button to end the conversation and provide feedback.</p>
-        <p><strong>Restarting:</strong> Use the "Reset User ID" button to restart a session.</p>
-      </section>
-      <footer class="modal-card-foot">
-        <button class="button is-primary" @click="proceedToSession">Start</button> <!-- Start session -->
-      </footer>
-    </div>
-  </div>
 </template>
 
 <style scoped lang="scss">
