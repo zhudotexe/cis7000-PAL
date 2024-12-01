@@ -7,7 +7,7 @@ const props = defineProps<{
 <template>
   <div class="media">
     <figure class="media-left">
-      <p class="image is-48x48">
+      <p class="image is-32x32">
         <!-- Use dynamic image or fallback -->
         <img :src="img" alt="Assistant Thinking" />
       </p>
@@ -21,3 +21,4 @@ const props = defineProps<{
 </template>
 
 <style scoped></style>
+

@@ -18,12 +18,13 @@ const showInstructions = ref(false);
 const selectedSessionId = ref<string | null>(null); 
 
 async function startNewInteractive() {
-  // soojin -- disable users from making new session
+  // soojin -- changed to disable new session
   console.warn("Starting new sessions has been disabled.");
 }
 
 async function updateInteractive() {
   interactiveSessions.value = await API.listStatesInteractive();
+  // PAL stuff - if we don't have the interactive states we want, make them
   if (interactiveSessions.value.length < 3) {
     await API.initPalStates();
     interactiveSessions.value = await API.listStatesInteractive();
@@ -33,7 +34,6 @@ async function updateInteractive() {
 async function resetUserId() {
   const conf = confirm("Are you sure? This will reset all patient states!");
   if (!conf) return;
-  sessionStorage.removeItem("popupShown");  // Reset sessionStorage for popup
   API.resetUid();
   router.push({ name: "home" });
 }
@@ -41,39 +41,34 @@ async function resetUserId() {
 
 function handleSessionClick(sessionId: string) { 
   selectedSessionId.value = sessionId; 
-  console.log("Session clicked:", sessionId);
-
-  // Show popup only if not already shown in this session
-  if (!sessionStorage.getItem("popupShown")) {
-    showInstructions.value = true; // Show the popup
-    sessionStorage.setItem("popupShown", "true"); // Mark popup as shown
-    console.log("Popup displayed after session click.");
-  } else {
-    console.log("Popup already shown for this session.");
-    proceedToSession(); // Directly proceed if popup was already shown
+  // Check if the popup has already been shown in this session
+  if (!sessionStorage.getItem("popupShown")) { // NEW
+    showInstructions.value = true;             // NEW
+    sessionStorage.setItem("popupShown", "true"); // NEW
+  } else {                                     // NEW
+    proceedToSession();                        // NEW
   }
 }
 
+// when clicked start start session, otehrwise stay in current state
 function proceedToSession() { 
   if (selectedSessionId.value) { 
     router.push({ name: "interactive", params: { sessionId: selectedSessionId.value } }); 
-    showInstructions.value = false; // Hide popup
+    showInstructions.value = false;
     selectedSessionId.value = null; 
   }
 }
 
 
+// hooks
 onMounted(async () => {
-  console.log("Page mounted, updating interactive sessions...");
   await updateInteractive();
 });
-
 router.afterEach(async () => {
-  console.log("Route changed, updating interactive sessions...");
+  // update the session list on each navigation
   await updateInteractive();
 });
 </script>
-
 
 <template>
   <aside class="menu drawer h-100" :class="{ closed: !isOpen, open: isOpen }">
@@ -141,19 +136,18 @@ router.afterEach(async () => {
   </aside>
 
   <LoadSaveModal ref="loadSaveModal" />
-
   <div v-if="showInstructions" class="modal is-active"> 
     <div class="modal-background"></div>
     <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">How to Start?</p>
-        <button class="delete" aria-label="close" @click="showInstructions = false"></button> 
+        <button class="delete" aria-label="close" @click="showInstructions = false"></button> <!-- Close Modal -->
       </header>
       <section class="modal-card-body">
-        <p><strong>Patient Context:</strong> Review the patient profile in the right panel.</p>
-        <p><strong>Interaction Modes:</strong> Toggle between Speech and Text Input (top-right)</p>
-        <p><strong>Feedback:</strong> Use "End Session" button to end the conversation and provide feedback.</p>
-        <p><strong>Restart:</strong> Click "Reset User ID" button to restart a session.</p>
+        <p><strong>Patient Context:</strong> Read the patient profile for context.</p>
+        <p><strong>Interaction Modes:</strong> Toggle between Speech and Text Input.</p>
+        <p><strong>Feedback:</strong> Use the "Feedback" button to end the conversation and provide feedback.</p>
+        <p><strong>Restarting:</strong> Use the "Reset User ID" button to restart a session.</p>
       </section>
       <footer class="modal-card-foot">
         <button class="button is-primary" @click="proceedToSession">Start</button> <!-- Start session -->

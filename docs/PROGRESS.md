@@ -6,7 +6,7 @@
 - Disabled the option to start a new session, aligning with the intended design.
 - Redesigned the interface to guide clinicians toward selecting one of the three available interactive patient sessions.
 - Improved clarity by providing concise instructions for navigating existing sessions.
-![Updated Landing Page Navigation](docs/_static/ux_improvements/updated_navigation.png)
+
 ### Added Instructions for Interactive Sessions
 - Implemented a popup that provides instructions when a user clicks on an interactive session.
 - **Design Decision:** To avoid annoying users by showing the popup repeatedly, used `sessionStorage` to display the popup only on the first interaction per browser tab session.
