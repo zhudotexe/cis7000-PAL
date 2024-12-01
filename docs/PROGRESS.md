@@ -23,7 +23,7 @@ Below, you can find small UX improvements to the palliative care chatbot within 
 - Standardized emoji usage across patient profiles and text conversations, ensuring consistency.
 - Addressed cross-state emoji jumps (e.g., `AssistantStream.vue`, `AssistantThinking.vue`, and `AssistantMessage.vue`) by passing the emoji across all states.
 
-![Emoji Matching](_static/matched_emoji/ux_improvements.png)
+![Emoji Matching](_static/ux_improvements/matched_emoji.png)
 
 ---
 
