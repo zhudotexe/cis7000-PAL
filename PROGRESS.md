@@ -7,7 +7,7 @@ Below, you can find small UX improvements to the palliative care chatbot within 
 ### Updated Landing Page Navigation
 - Disabled the ability to start a new session, ensuring clinicians are directed toward existing patient sessions.
 
-![Updated Landing Page Navigation](docs/_static/ux_improvements/updated_navigation.png)
+![Updated Landing Page Navigation](_static/ux_improvements/updated_navigation.png)
 
 ---
 
@@ -15,7 +15,7 @@ Below, you can find small UX improvements to the palliative care chatbot within 
 - Introduced a popup to provide instructions when a user clicks on an interactive session.
 - **UX Decision:** To avoid frustrating users with repetitive popups, used `sessionStorage` to ensure the popup appears only once per browser tab session or when the user resets their user ID.
 
-![Interactive Session Instructions](docs/_static/ux_improvements/interactive_instructions.png)
+![Interactive Session Instructions](_static/ux_improvements/interactive_instructions.png)
 
 ---
 
@@ -23,7 +23,7 @@ Below, you can find small UX improvements to the palliative care chatbot within 
 - Standardized emoji usage across patient profiles and text conversations, ensuring consistency.
 - Addressed cross-state emoji jumps (e.g., `AssistantStream.vue`, `AssistantThinking.vue`, and `AssistantMessage.vue`) by passing the emoji across all states.
 
-![Emoji Matching](docs/_static/matched_emoji/ux_improvements.png)
+![Emoji Matching](_static/ux_improvements/matched_emoji.png)
 
 ---
 
