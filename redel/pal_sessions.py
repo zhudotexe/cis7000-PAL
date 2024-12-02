@@ -133,4 +133,25 @@ async def get_default_sessions(engine, uid: str) -> list[ReDel]:
     )
     redels.append(nicki_voice_mode)
 
+    session_id = f"{now}-Wellbeing_Bot-{uuid.uuid4()}"
+    log_dir = DEFAULT_LOG_DIR / uid / session_id
+    india_system = (PAL_PROMPTS / "india_voice_system.txt").read_text().strip()
+    india_info = (PAL_PROMPTS / "india_info.md").read_text().strip()
+    india_voice_mode = ReDel(
+        engine=engine,
+        session_id=session_id,
+        log_dir=log_dir,
+        system_prompt=india_system,
+        title="Wellbeing Bot",
+        extra={
+            "patient_info": india_info,
+            "patient_name": "Wellbeing Bot",
+            "patient_age": "",
+            "patient_gender": "",
+            "patient_image_url": "/faces/wellbeing_bot.png",
+            "patient_voice": "0AhMLhS8cg2zbxNVsWMV",
+        },
+    )
+    redels.append(india_voice_mode)
+
     return redels
