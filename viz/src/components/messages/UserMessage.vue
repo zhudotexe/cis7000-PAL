@@ -11,7 +11,7 @@ const props = defineProps<{
   <div class="media user-message">
     <figure class="media-left">
       <p class="image is-48x48">
-        <img src="@/assets/twemoji/gender_neutral_doctor.svg" alt="User" />
+        <img src="@/assets/twemoji/brown_gender_neutral_doctor.svg" alt="User" />
       </p>
     </figure>
     <div class="media-content">
