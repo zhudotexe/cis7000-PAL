@@ -75,9 +75,9 @@ export class InteractiveClient {
     // this.client.appendInputAudio(audioData);
 
     // Convert Int16Array to Base64
-    var bytes = new Uint8Array(audioData.buffer, audioData.byteOffset, audioData.byteLength);
-    var binary = '';
-    for (var i = 0; i < bytes.byteLength; i++) {
+    const bytes = new Uint8Array(audioData.buffer, audioData.byteOffset, audioData.byteLength);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
         binary += String.fromCharCode(bytes[i]);
     }
 

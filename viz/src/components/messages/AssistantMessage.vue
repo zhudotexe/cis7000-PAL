@@ -3,8 +3,11 @@ import Markdown from "@/components/Markdown.vue";
 import AssistantFunctionCall from "@/components/messages/AssistantFunctionCall.vue";
 import type { ChatMessage } from "@/redel/models";
 
+// Default fallback image
+
 const props = defineProps<{
   message: ChatMessage;
+  img?: string; // Dynamic image URL passed from ChatMessages.vue
 }>();
 </script>
 
@@ -12,7 +15,7 @@ const props = defineProps<{
   <div class="media">
     <figure class="media-left">
       <p class="image is-48x48">
-        <img src="@/assets/twemoji/1f912.svg" alt="Assistant" />
+        <img :src="img" alt="Assistant" />
       </p>
     </figure>
     <div class="media-content">

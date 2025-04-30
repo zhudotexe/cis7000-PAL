@@ -3,6 +3,7 @@ import Markdown from "@/components/Markdown.vue";
 
 const props = defineProps<{
   content: string;
+  img?: string; // Dynamic image URL passed from ChatMessages.vue
 }>();
 </script>
 
@@ -10,7 +11,7 @@ const props = defineProps<{
   <div class="media">
     <figure class="media-left">
       <p class="image is-32x32">
-        <img src="@/assets/twemoji/1f916.svg" alt="Assistant" />
+        <img :src="img" alt="Assistant Stream" />
       </p>
     </figure>
     <div class="media-content">

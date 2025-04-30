@@ -69,7 +69,7 @@ function endInteraction() {
           :name="client.state.meta?.extra?.patient_name ?? 'No patient name'" 
           :age="client.state.meta?.extra?.patient_age ?? 'No patient age'" 
           :gender="client.state.meta?.extra?.patient_gender ?? 'No patient gender'" 
-          :img="client.state.meta?.extra?.patient_image_url ?? '@/assets/faces/nervous.png'"
+          :img="client.state.meta?.extra?.patient_image_url || require('@/faces/nervous.png')"
           ref="patient" 
         />
         </div>
